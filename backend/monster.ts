@@ -5,6 +5,36 @@
 
 const MAX_LEVEL = 100;
 
+enum MonsterType {
+    Common,
+    Rare,
+    Epic,
+    Legendary,
+    //DEV,        // Only for developer testing
+}
+
+function getHatchDuration(type: MonsterType): number {
+    let time: number = 0;
+
+    // Getting the time to hatch in hours
+    switch (type) {
+        case (MonsterType.Common):
+            time = 1;
+            break;
+        case (MonsterType.Rare):
+            time = 2;
+            break;
+        case (MonsterType.Epic):
+            time = 4;
+            break;
+        case (MonsterType.Legendary):
+            time = 8;
+            break;
+    }
+
+    return time * 60 * 60 * 1000;
+}
+
 class Monster {
     name: string;
     id: string;
@@ -12,14 +42,17 @@ class Monster {
     xp: number = 0;
     health: number = 100;
     evolution_number: number = 1;
+    type: MonsterType;
     // Add in some sort of defense and attack
 
-    constructor(name: string, monster_id: string, player_id: string) {
+    constructor(name: string, monster_id: string, player_id: string | null, type: MonsterType) {
         // Check database for this player's id
         // if the id exists and they hace this monster, load in the 
         // struct data from the database.
         // if none exists, create a new instance as follows:
 
+
+        this.type = type;
         this.name = name;
         this.id = monster_id;
     }
@@ -66,10 +99,6 @@ class Monster {
 
     // Evolves the monster.
     evolve() {
-        // TODO - 
-        // Make an API call to dall-e to create a new image of the monster
-        // Maybe add a new move
-
         this.evolution_number += 1;
     }
 
@@ -85,4 +114,64 @@ class Monster {
     }
 }
 
-export { Monster }
+
+
+class Egg {
+    type: MonsterType;
+    hatch_start_time: Date | null;
+
+    // TODO
+    // WE WILL HAVE THE THREE IMAGES FROM THE THREE EVOLUTIONS HERE
+    // THey will be made before hand so that it doesnt take forever when hatching.
+
+
+    constructor(type: MonsterType | null) {
+        this.type = this.chooseEggType(type);
+        this.hatch_start_time = null;
+
+        // TODO
+        // GET IMAGES FROM DALL-E
+    }
+
+    chooseEggType(type: MonsterType | null): MonsterType {
+        if (type !== null) { return type }
+
+        const num = Math.floor(Math.random() * 100);
+
+        if (num === 100) { return MonsterType.Legendary }       // 1/100 change of getting legendary
+        else if (num % 25 === 0) { return MonsterType.Epic }    // 1/25 chance of getting epic
+        else if (num % 10 === 0) { return MonsterType.Epic }    // 1/10 chance of getting rare
+        else { return MonsterType.Common }                      // All other eggs are common
+    }
+
+    isReady2Hatch(): Boolean {
+        if (!this.hatch_start_time) { return false }
+
+        const elapsed = (new Date()).getTime() - this.hatch_start_time.getTime();
+        return elapsed >= getHatchDuration(this.type);
+    }
+
+    beginHatching() {
+        this.hatch_start_time = new Date();
+    }
+
+    hatch(): Monster | null {
+        if (!this.isReady2Hatch()) { return null }
+
+        // TODO
+        // THESE ARE HARDCODED FOR NOW
+        let name: string = 'chad';
+        let id: string = '12345';
+        let player_id: string = '678910'
+
+        // TODO
+        // Transfer images to the new monster
+
+        return new Monster(name, id, player_id, this.type)
+    }
+}
+
+export { 
+    Monster,
+    Egg
+}
