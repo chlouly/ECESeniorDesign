@@ -10,15 +10,15 @@ const NUM_MONSTERS_BENCH: number = 120;
 
 class Player {
     private name: string;   // Username
-    private id: string;     // Actual user ID
-    private monsters_roster: Monster[] = [];    // Monsters to be used in fights
-    private monsters_bench: Monster[] = [];    // Monsters stored away for later
+    private id: number;     // Actual user ID
+    private monsters_roster: number[] = [];    // Monsters ids to be used in fights
+    private monsters_bench: number[] = [];    // Monsters ids stored away for later
     private level: number = 1;
     private xp: number = 0;
 
     // Loads in player data that matches 'id' if it exists,
     // Otherwise it creates new data.
-    constructor(name: string, id: string) {
+    constructor(name: string, id: number) {
         // TODO
         // Check database for this id
         // if one exists, load in the struct data from the database
@@ -39,7 +39,7 @@ class Player {
     // directly modifying a struct's values (security)
 
     // This function returns the user's id
-    public get_id(): string { return this.id }
+    public get_id(): number { return this.id }
 
     // This function returns the username
     public get_name(): string { return this.name }
@@ -51,10 +51,10 @@ class Player {
     public get_xp(): number { return this.xp }
 
     // Checks if the roster is full
-    private roster_full(): boolean { return this.monsters_roster.length < NUM_MONSTERS_ROSTER }
+    private roster_full(): boolean { return this.monsters_roster.length >= NUM_MONSTERS_ROSTER }
 
     // Checks if the bench is full
-    private bench_full(): boolean { return this.monsters_bench.length < NUM_MONSTERS_BENCH }
+    private bench_full(): boolean { return this.monsters_bench.length >= NUM_MONSTERS_BENCH }
 
 
 
@@ -90,67 +90,67 @@ class Player {
 
     // NOTE: if any of these functions have null as an input, they do nothing
 
-    // This function adds a monster to the player's roster of monsters
-    // Returns null if the monster was added successfully
-    // Returns the monster if the list is full
-    public add2roster(monster: Monster | null): Monster | null {
+    // This function adds a monster's id to the player's roster of monsters
+    // Returns null if the monster's id was added successfully
+    // Returns the monster's id if the list is full
+    public add2roster(monster_id: number | null): number | null {
         // Roster was full or null was supplied
-        if (this.roster_full() || monster === null) { return monster }
+        if (this.roster_full() || monster_id === null) { return monster_id }
 
-        this.monsters_roster.push(monster);
+        this.monsters_roster.push(monster_id);
 
         // Monster added successfully
         return null;
     }
 
-    // This function adds a monster to the player's bench of monsters
-    // Returns null if the monster was added successfully
-    // Returns the monster if the list is full
-    public add2bench(monster: Monster | null): Monster | null {
+    // This function adds a monster's id to the player's bench of monsters
+    // Returns null if the monster's id was added successfully
+    // Returns the monster's id if the list is full
+    public add2bench(monster_id: number | null): number | null {
         // Bench was full or null was supplied
-        if (this.bench_full() || monster === null) { return monster }
+        if (this.bench_full() || monster_id === null) { return monster_id }
 
-        this.monsters_bench.push(monster);
+        this.monsters_bench.push(monster_id);
 
         // Monster added successfully
         return null;
     }
 
     // Removes a monster with a particular id from the roster
-    // Returns the monster on success and null on failure
-    public remove_from_roster(id: string | null): Monster | null {
+    // Returns the monster's id on success and null on failure
+    public remove_from_roster(id: number | null): number | null {
         return null;
     }
 
     // Removes a monster with a particular id from the bench
-    // Returns the monster on success and null on failure
-    public remove_from_bench(id: string | null): Monster | null {
+    // Returns the monster's id on success and null on failure
+    public remove_from_bench(id: number | null): number | null {
         return null;
     }
     
-    // Takes a monster and moves it from the bench to the roster
+    // Takes a monster's id and moves it from the bench to the roster
     // Returns true on success and false on failure.
-    // On failure the monster is placed back in the bench if one was ever found
-    public bench2roster(id: string): boolean {
+    // On failure the monster's id is placed back in the bench if one was ever found
+    public bench2roster(id: number): boolean {
         return this.swap_monsters(id, null);
     }
 
-    // Takes a monster and moves it from the roster to the bench
+    // Takes a monster's id and moves it from the roster to the bench
     // Returns true on success and false on failure.
-    // On failure the monster is placed back in the roster if one was ever found
-    public roster2bench(id: string): boolean {
+    // On failure the monster's id is placed back in the roster if one was ever found
+    public roster2bench(id: number): boolean {
         return this.swap_monsters(null, id);
     }
 
-    // Swaps the position of two monsters, one in the bench and one in the roster
+    // Swaps the position of two monsters's ids, one in the bench and one in the roster
     // Returns false if the swap fails and true if it succeeds.
-    swap_monsters(bench_id: string | null, roster_id: string | null): boolean {
-        const bench_mon: Monster | null = this.remove_from_bench(bench_id);
+    swap_monsters(bench_id: number | null, roster_id: number | null): boolean {
+        const bench_mon: number | null = this.remove_from_bench(bench_id);
         if (bench_mon === null && bench_id !== null) { 
             return false;
         }
 
-        const roster_mon: Monster | null = this.remove_from_roster(roster_id);
+        const roster_mon: number | null = this.remove_from_roster(roster_id);
         if (roster_mon === null && roster_id !== null) { 
             this.add2bench(bench_mon);
             return false;

@@ -37,7 +37,7 @@ function getHatchDuration(type: MonsterType): number {
 
 class Monster {
     name: string;
-    id: string;
+    id: number;
     level: number = 1;
     xp: number = 0;
     health: number = 100;
@@ -45,7 +45,7 @@ class Monster {
     type: MonsterType;
     // Add in some sort of defense and attack
 
-    constructor(name: string, monster_id: string, player_id: string | null, type: MonsterType) {
+    constructor(name: string, monster_id: number, player_id: number | null, type: MonsterType) {
         // Check database for this player's id
         // if the id exists and they hace this monster, load in the 
         // struct data from the database.
@@ -161,8 +161,8 @@ class Egg {
         // TODO
         // THESE ARE HARDCODED FOR NOW
         let name: string = 'chad';
-        let id: string = '12345';
-        let player_id: string = '678910'
+        let id: number = 12345;
+        let player_id: number = 678910;
 
         // TODO
         // Transfer images to the new monster
