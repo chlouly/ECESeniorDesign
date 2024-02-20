@@ -1,4 +1,4 @@
-import { Monster, MonsterType } from './monster';
+import { Monster, MonsterType } from '../monster';
 
 function getHatchDuration(type: MonsterType): number {
     let time: number = 0;

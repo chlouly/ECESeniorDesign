@@ -3,7 +3,7 @@
 //  definitions for users
 //
 
-import { Egg } from './egg';
+import { Egg } from './game_elems/egg';
 
 const NUM_MONSTERS_ROSTER: number = 6;
 const NUM_MONSTERS_BENCH: number = 120;
