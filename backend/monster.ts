@@ -13,28 +13,6 @@ enum MonsterType {
     //DEV,        // Only for developer testing
 }
 
-function getHatchDuration(type: MonsterType): number {
-    let time: number = 0;
-
-    // Getting the time to hatch in hours
-    switch (type) {
-        case (MonsterType.Common):
-            time = 1;
-            break;
-        case (MonsterType.Rare):
-            time = 2;
-            break;
-        case (MonsterType.Epic):
-            time = 4;
-            break;
-        case (MonsterType.Legendary):
-            time = 8;
-            break;
-    }
-
-    return time * 60 * 60 * 1000;
-}
-
 class Monster {
     name: string;
     id: number;
@@ -45,16 +23,22 @@ class Monster {
     type: MonsterType;
     // Add in some sort of defense and attack
 
-    constructor(name: string, monster_id: number, player_id: number | null, type: MonsterType) {
-        // Check database for this player's id
-        // if the id exists and they hace this monster, load in the 
-        // struct data from the database.
-        // if none exists, create a new instance as follows:
-
-
-        this.type = type;
+    constructor(
+        name: string,
+        id: number, 
+        level: number | null,
+        xp: number | null, 
+        health: number | null,
+        evolution: number | null,
+        type: MonsterType, 
+    ) {
+        this.id = id;
         this.name = name;
-        this.id = monster_id;
+        if (level !== null) { this.level = level; }
+        if (xp !== null) { this.xp = xp; }
+        if (health !== null) { this.health = health; }
+        if (evolution !== null) { this.evolution_number = evolution; }
+        this.type = type;
     }
 
 
@@ -116,62 +100,46 @@ class Monster {
 
 
 
-class Egg {
-    type: MonsterType;
-    hatch_start_time: Date | null;
+// Makeshift ORM for the database
+interface MonsterRow {
+    name: string;
+    id: number;
+    level: number;
+    xp: number;
+    health: number;
+    evolution_number: number;
+    type: number;
+}
 
-    // TODO
-    // WE WILL HAVE THE THREE IMAGES FROM THE THREE EVOLUTIONS HERE
-    // THey will be made before hand so that it doesnt take forever when hatching.
+function row2monster(row: MonsterRow): Monster {
+    return new Monster (
+        row.name,
+        row.id,
+        row.level,
+        row.xp,
+        row.health,
+        row.evolution_number,
+        row.type as MonsterType
+    );
+}
 
-
-    constructor(type: MonsterType | null) {
-        this.type = this.chooseEggType(type);
-        this.hatch_start_time = null;
-
-        // TODO
-        // GET IMAGES FROM DALL-E
-    }
-
-    chooseEggType(type: MonsterType | null): MonsterType {
-        if (type !== null) { return type }
-
-        const num = Math.floor(Math.random() * 100);
-
-        if (num === 100) { return MonsterType.Legendary }       // 1/100 change of getting legendary
-        else if (num % 25 === 0) { return MonsterType.Epic }    // 1/25 chance of getting epic
-        else if (num % 10 === 0) { return MonsterType.Epic }    // 1/10 chance of getting rare
-        else { return MonsterType.Common }                      // All other eggs are common
-    }
-
-    isReady2Hatch(): Boolean {
-        if (!this.hatch_start_time) { return false }
-
-        const elapsed = (new Date()).getTime() - this.hatch_start_time.getTime();
-        return elapsed >= getHatchDuration(this.type);
-    }
-
-    beginHatching() {
-        this.hatch_start_time = new Date();
-    }
-
-    hatch(): Monster | null {
-        if (!this.isReady2Hatch()) { return null }
-
-        // TODO
-        // THESE ARE HARDCODED FOR NOW
-        let name: string = 'chad';
-        let id: number = 12345;
-        let player_id: number = 678910;
-
-        // TODO
-        // Transfer images to the new monster
-
-        return new Monster(name, id, player_id, this.type)
+function monster2row(monster: Monster): MonsterRow {
+    return {
+        name: monster.name,
+        id: monster.id,
+        level: monster.level,
+        xp: monster.xp,
+        health: monster.health,
+        evolution_number: monster.evolution_number,
+        type: monster.type
     }
 }
 
+
 export { 
     Monster,
-    Egg
+    MonsterType,
+    MonsterRow,
+    row2monster,
+    monster2row
 }

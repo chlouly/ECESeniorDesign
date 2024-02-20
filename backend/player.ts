@@ -3,29 +3,42 @@
 //  definitions for users
 //
 
-import { Monster } from './monster';
+import { Egg } from './egg';
 
 const NUM_MONSTERS_ROSTER: number = 6;
 const NUM_MONSTERS_BENCH: number = 120;
+const NUM_EGGS = 20;
 
 class Player {
     private name: string;   // Username
     private id: number;     // Actual user ID
-    private monsters_roster: number[] = [];    // Monsters ids to be used in fights
-    private monsters_bench: number[] = [];    // Monsters ids stored away for later
+    public monsters_roster: number[] = [];     // Monster ids to be used in fights
+    public monsters_bench: number[] = [];      // Monster ids stored away for later
+    public eggs: number[] = [];                // Egg ids that the user has
+    public currently_hatching_egg: number | null = null;   // Egg that is currently being hatched
     private level: number = 1;
     private xp: number = 0;
 
     // Loads in player data that matches 'id' if it exists,
     // Otherwise it creates new data.
-    constructor(name: string, id: number) {
-        // TODO
-        // Check database for this id
-        // if one exists, load in the struct data from the database
-        // if none exists, create a new instance as follows:
-
+    constructor(
+        name: string, 
+        id: number,
+        monsters_roster: number[],
+        monsters_bench: number[],
+        eggs: number[],
+        currently_hatching_egg: number | null,
+        level: number,
+        xp: number
+    ) {
         this.name = name;
         this.id = id;
+        this.monsters_roster = monsters_roster;
+        this.monsters_bench = monsters_bench;
+        this.eggs = eggs;
+        this.currently_hatching_egg = currently_hatching_egg;
+        this.level = level;
+        this.xp = xp;
     }
 
 
@@ -174,6 +187,37 @@ class Player {
         return true;
     }
 
+
+
+
+    /////////////////////////////////////////////
+    //              EGG DATA MANIP             //
+    /////////////////////////////////////////////
+
+    public new_egg(): boolean {
+        // Not enough space
+        if (this.eggs.length >= NUM_EGGS) { return false }
+
+        // Create a new egg and add it to the list
+        return true;
+    }
+
+    public start_hatch_egg(id: number): boolean {
+        // There is already an egg hatching
+        if (this.currently_hatching_egg !== null) { return false }
+
+        // TODO GET EGG FROM DB
+
+        return false;
+    }
+
+    public hatch_egg(): boolean {
+        // No egg to finish hatching
+        if (this.currently_hatching_egg !== null) { return false }
+
+        return false;
+    }
+
     // Saves all user data to the database
     // Returns true upon success, returns false on failure
     public save2db(): boolean {
@@ -185,4 +229,48 @@ class Player {
     }
 }
 
-export { Player }
+
+
+interface PlayerRow {
+    name: string;   
+    id: number; 
+    monsters_roster: number[];
+    monsters_bench: number[];
+    eggs: number[];
+    currently_hatching_egg: number | null;
+    level: number;
+    xp: number;
+}
+
+function row2player(row: PlayerRow): Player {
+    return new Player(
+        row.name,
+        row.id,
+        row.monsters_roster,
+        row.monsters_bench,
+        row.eggs,
+        row.currently_hatching_egg,
+        row.level,
+        row.xp  
+    );
+}
+
+function player2row(player: Player): PlayerRow {
+    return {
+        name: player.get_name(),
+        id: player.get_id(),
+        monsters_roster: player.monsters_roster,
+        monsters_bench: player.monsters_bench,
+        eggs: player.eggs,
+        currently_hatching_egg: player.currently_hatching_egg,
+        level: player.get_level(),
+        xp: player.get_xp()  
+    }
+}
+
+export { 
+    Player,
+    PlayerRow,
+    row2player,
+    player2row
+}
