@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm i && tsc",
-    "dev": "npm run clean || npm run build && npm run server",
+    "dev": "npm run clean || npm run build && npm run start",
     "start": "node app.js",
     "clean": "rm -r node_modules && rm -r *.js"
   },

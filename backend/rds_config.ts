@@ -1,7 +1,8 @@
-
+import * as dotenv from 'dotenv';
 import { Client } from 'pg';
 import { logger } from './logger';
-import { process } from './app';
+
+dotenv.config();
 
 const user = String(process.env.RDS_USER);
 const host = String(process.env.RDS_HOST);

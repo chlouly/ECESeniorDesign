@@ -9,7 +9,7 @@ dotenv.config();
 setup_rds_tables();
 
 const app = express();
-const port = process.env.PORT || 3000; // You can choose any port
+const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello World from TypeScript!');
