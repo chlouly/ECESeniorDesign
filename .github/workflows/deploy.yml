@@ -22,8 +22,9 @@ jobs:
           TARGET: "/home/ec2-user/OSS"
       - name: Run rebuild script on EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.SENIOR_DESIGN_DEPLOY_KEY }} ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com "bash -s" < ./backend/redeploy
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.SENIOR_DESIGN_DEPLOY_KEY }} ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com "
+            cd /home/ec2-user/OSS/backend &&
+            ./redeploy &&
+            echo 'Rebuild script executed successfully'"
         env:
           SENIOR_DESIGN_DEPLOY_KEY: ${{ secrets.Senior_Design_deploy_key }}
-        
-
