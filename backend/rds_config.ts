@@ -53,7 +53,7 @@ async function setup_rds_tables() {
     );
 
     -- Create the Monsters table with a foreign key reference to the Users table
-    CREATE TABLE IF NOT EXISTS ${MONSTER_TABLE_NAME} ( (
+    CREATE TABLE IF NOT EXISTS ${MONSTER_TABLE_NAME} (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       user_id INT,
@@ -61,7 +61,7 @@ async function setup_rds_tables() {
     );
 
     -- Creating the Eggs table with foreign key reference to Users
-    CREATE TABLE IF NOT EXISTS ${EGG_TABLE_NAME} ( (
+    CREATE TABLE IF NOT EXISTS ${EGG_TABLE_NAME} (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       user_id INT,
@@ -78,7 +78,7 @@ async function setup_rds_tables() {
     ADD COLUMN bench INT[];
     ALTER TABLE Users
     ADD COLUMN eggs INT[];
-    );`;
+    `;
     await client.query(query);
     logger.debug(`Successfully created tables`);
   } catch (error) {
