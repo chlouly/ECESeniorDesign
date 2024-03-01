@@ -21,11 +21,11 @@ jobs:
           REMOTE_USER: "ec2-user"
           TARGET: "/home/ec2-user/OSS"
 
-  rebuild-backend:
+  build-backend:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Execute commands on EC2 to rebuild backend
+      - name: Execute commands on EC2 to build backend
         run: |
           echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
           chmod 600 private_key
@@ -33,18 +33,35 @@ jobs:
             cd /home/ec2-user/OSS/backend &&
             ./redeploy &&
             echo "Rebuild script executed successfully"
-          ' 
 
-  rebuild-frontend:
+
+  build-frontend:
+    name: Build Frontend
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Execute commands on EC2 to rebuild frontend
+      - name: Execute Frontend Build Commands on EC2
         run: |
           echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
           chmod 600 private_key
           ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com '
-          cd /home/ec2-user/OSS/front-end &&
-          npm run build &&
-          echo "Rebuild script executed successfully"
-        '
+            cd /home/ec2-user/OSS/frontend &&
+            npm install &&
+            npm run build &&
+            echo "Frontend rebuild script executed successfully"
+
+  start-server:
+    name: Start Server
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start Server on EC2
+        run: |
+          echo "Server started (placeholder echo command)"
+          # In the future, replace the line above with the actual command to start the server
+          # For example:
+          # ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com '
+          #   cd /home/ec2-user/OSS &&
+          #   npm start
+          #   echo "Server started successfully"
+          # '
