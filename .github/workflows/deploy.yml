@@ -45,7 +45,7 @@ jobs:
           echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
           chmod 600 private_key
           ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com '
-            cd /home/ec2-user/OSS/frontend &&
+            cd /home/ec2-user/OSS/front-end &&
             npm install &&
             npm run build &&
             echo "Frontend rebuild script executed successfully"
@@ -62,6 +62,6 @@ jobs:
           # For example:
           # ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com '
           #   cd /home/ec2-user/OSS &&
-          #   npm start
+          #   
           #   echo "Server started successfully"
           # '
