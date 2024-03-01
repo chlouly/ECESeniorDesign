@@ -5,7 +5,6 @@ on:
     branches: [ main ]
 jobs:
   deploy:
-    # needs: test
     name: Deploy to EC2
     runs-on: ubuntu-latest
     steps:
@@ -20,11 +19,14 @@ jobs:
           REMOTE_HOST: "ec2-34-235-116-79.compute-1.amazonaws.com"
           REMOTE_USER: "ec2-user"
           TARGET: "/home/ec2-user/OSS"
+      
       - name: Run rebuild script on EC2
-        run: |
-          ssh -v -o StrictHostKeyChecking=no -i ${{ secrets.Senior_Design_deploy_key }} ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com "
+        uses: garygrossgarten/github-action-ssh@release
+        with:
+          command: |
             cd /home/ec2-user/OSS/backend &&
             ./redeploy &&
-            echo 'Rebuild script executed successfully'"
-        env:
-          Senior_Design_deploy_key: ${{ secrets.Senior_Design_deploy_key }}
+            echo 'Rebuild script executed successfully'
+          host: "ec2-34-235-116-79.compute-1.amazonaws.com"
+          username: ec2-user
+          privateKey: ${{ secrets.Senior_Design_deploy_key }}
