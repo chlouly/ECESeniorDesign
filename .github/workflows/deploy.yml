@@ -3,6 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches: [ main ]
+
 jobs:
   deploy:
     name: Deploy to EC2
@@ -19,8 +20,13 @@ jobs:
           REMOTE_HOST: "ec2-34-235-116-79.compute-1.amazonaws.com"
           REMOTE_USER: "ec2-user"
           TARGET: "/home/ec2-user/OSS"
-      
-      - name: Run rebuild script on EC2
+
+  run_script:
+    name: Run rebuild script on EC2
+    runs-on: ubuntu-latest
+    needs: deploy # This ensures that run_script only runs after deploy has completed successfully
+    steps:
+      - name: Executing rebuild script
         uses: garygrossgarten/github-action-ssh@release
         with:
           command: |
