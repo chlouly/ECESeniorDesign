@@ -27,4 +27,4 @@ jobs:
             ./redeploy &&
             echo 'Rebuild script executed successfully'"
         env:
-          SENIOR_DESIGN_DEPLOY_KEY: ${{ secrets.Senior_Design_deploy_key }}
+          Senior_Design_deploy_key: ${{ secrets.Senior_Design_deploy_key }}
