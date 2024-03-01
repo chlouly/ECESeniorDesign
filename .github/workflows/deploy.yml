@@ -21,11 +21,11 @@ jobs:
           REMOTE_USER: "ec2-user"
           TARGET: "/home/ec2-user/OSS"
 
-  run-commands:
+  rebuild-backend:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Execute commands on EC2
+      - name: Execute commands on EC2 to rebuild backend
         run: |
           echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
           chmod 600 private_key
@@ -33,4 +33,18 @@ jobs:
             cd /home/ec2-user/OSS/backend &&
             ./redeploy &&
             echo "Rebuild script executed successfully"
-          '
+          ' 
+
+  rebuild-frontend:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute commands on EC2 to rebuild frontend
+        run: |
+          echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
+          chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com '
+          cd /home/ec2-user/OSS/front-end &&
+          npm run build &&
+          echo "Rebuild script executed successfully"
+        '
