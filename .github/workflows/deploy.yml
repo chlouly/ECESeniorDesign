@@ -22,6 +22,7 @@ jobs:
           TARGET: "/home/ec2-user/OSS"
 
   build-backend:
+    name: Build Backend
     needs: deploy
     runs-on: ubuntu-latest
     steps:
@@ -33,6 +34,7 @@ jobs:
             cd /home/ec2-user/OSS/backend &&
             ./redeploy &&
             echo "Rebuild script executed successfully"
+          '
 
 
   build-frontend:
