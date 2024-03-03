@@ -1,0 +1,69 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Deploy to EC2
+        uses: easingthemes/ssh-deploy@v2.1.5
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.Senior_Design_deploy_key }}
+          SOURCE: "./"
+          REMOTE_HOST: "ec2-34-235-116-79.compute-1.amazonaws.com"
+          REMOTE_USER: "ec2-user"
+          TARGET: "/home/ec2-user/OSS"
+
+  build-backend:
+    name: Build Backend
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute commands on EC2 to build backend
+        run: |
+          echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
+          chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com '
+            cd /home/ec2-user/OSS/backend &&
+            ./redeploy &&
+            echo "Rebuild script executed successfully"
+          '
+
+
+  build-frontend:
+    name: Build Frontend
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute Frontend Build Commands on EC2
+        run: |
+          echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
+          chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com '
+            cd /home/ec2-user/OSS/front-end &&
+            npm install &&
+            npm run build &&
+            echo "Frontend rebuild script executed successfully"
+          '
+
+  start-server:
+    name: Start Server
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start Server on EC2
+        run: |
+          echo "Server started (placeholder echo command)"
+          # In the future, replace the line above with the actual command to start the server
+          # For example:
+          # ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-34-235-116-79.compute-1.amazonaws.com '
+          #   cd /home/ec2-user/OSS &&
+          #   echo "Server started successfully"
+          # '

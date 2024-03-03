@@ -5,23 +5,40 @@
 
 const MAX_LEVEL = 100;
 
+enum MonsterType {
+    Common,
+    Rare,
+    Epic,
+    Legendary,
+    //DEV,        // Only for developer testing
+}
+
 class Monster {
     name: string;
-    id: string;
+    id: number;
     level: number = 1;
     xp: number = 0;
     health: number = 100;
     evolution_number: number = 1;
+    type: MonsterType;
     // Add in some sort of defense and attack
 
-    constructor(name: string, monster_id: string, player_id: string) {
-        // Check database for this player's id
-        // if the id exists and they hace this monster, load in the 
-        // struct data from the database.
-        // if none exists, create a new instance as follows:
-
+    constructor(
+        name: string,
+        id: number, 
+        level: number | null,
+        xp: number | null, 
+        health: number | null,
+        evolution: number | null,
+        type: MonsterType, 
+    ) {
+        this.id = id;
         this.name = name;
-        this.id = monster_id;
+        if (level !== null) { this.level = level; }
+        if (xp !== null) { this.xp = xp; }
+        if (health !== null) { this.health = health; }
+        if (evolution !== null) { this.evolution_number = evolution; }
+        this.type = type;
     }
 
 
@@ -66,10 +83,6 @@ class Monster {
 
     // Evolves the monster.
     evolve() {
-        // TODO - 
-        // Make an API call to dall-e to create a new image of the monster
-        // Maybe add a new move
-
         this.evolution_number += 1;
     }
 
@@ -85,4 +98,48 @@ class Monster {
     }
 }
 
-export { Monster }
+
+
+// Makeshift ORM for the database
+interface MonsterRow {
+    name: string;
+    id: number;
+    level: number;
+    xp: number;
+    health: number;
+    evolution_number: number;
+    type: number;
+}
+
+function row2monster(row: MonsterRow): Monster {
+    return new Monster (
+        row.name,
+        row.id,
+        row.level,
+        row.xp,
+        row.health,
+        row.evolution_number,
+        row.type as MonsterType
+    );
+}
+
+function monster2row(monster: Monster): MonsterRow {
+    return {
+        name: monster.name,
+        id: monster.id,
+        level: monster.level,
+        xp: monster.xp,
+        health: monster.health,
+        evolution_number: monster.evolution_number,
+        type: monster.type
+    }
+}
+
+
+export { 
+    Monster,
+    MonsterType,
+    MonsterRow,
+    row2monster,
+    monster2row
+}
