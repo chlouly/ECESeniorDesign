@@ -9,6 +9,13 @@ const NUM_MONSTERS_ROSTER: number = 6;
 const NUM_MONSTERS_BENCH: number = 120;
 const NUM_EGGS = 20;
 
+enum Difficulty {
+    Easy = "EASY",
+    Medium = "MEDIUM",
+    Hard = "HARD",
+    Expert = "EXPERT"
+}
+
 class Player {
     private name: string;   // Username
     private id: number;     // Actual user ID
@@ -18,6 +25,7 @@ class Player {
     public currently_hatching_egg: number | null = null;   // Egg that is currently being hatched
     private level: number = 1;
     private xp: number = 0;
+    private difficulty: Difficulty = Difficulty.Easy;
 
     // Loads in player data that matches 'id' if it exists,
     // Otherwise it creates new data.
@@ -62,6 +70,9 @@ class Player {
 
     // This function returns a user's xp
     public get_xp(): number { return this.xp }
+
+    // This function returns the player's current difficulty level
+    public get_difficulty(): Difficulty { return this.difficulty }
 
     // Checks if the roster is full
     private roster_full(): boolean { return this.monsters_roster.length >= NUM_MONSTERS_ROSTER }
@@ -271,6 +282,7 @@ function player2row(player: Player): PlayerRow {
 export { 
     Player,
     PlayerRow,
+    Difficulty,
     row2player,
     player2row
 }
