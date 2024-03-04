@@ -36,10 +36,6 @@ app.use(express.static(path.join(__dirname, '../front-end/build')));
 //   res.send('Hello World from TypeScript!');
 // });
 
-app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../../front-end/build/index.html'));
-});
-
 
 ///////////////////////////////////////////////////////////
 // This endpoint takes a user ID and returns their username
@@ -187,6 +183,10 @@ app.get('/getstate', (req: Request, res: Response) => {
   console.log(matches);
 
   return res.status(200);
+});
+
+app.get('*', (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '../../front-end/build/index.html'));
 });
 
 app.listen(port, () => {
