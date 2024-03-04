@@ -3,8 +3,9 @@ import { Request, Response, NextFunction } from 'express';
 import * as dotenv from 'dotenv';
 import { logger } from "./logger";
 import { setup_rds_tables } from "./rds_config";
-import { Player } from "./game_elems/player";
+import { Player, Difficulty } from "./game_elems/player";
 import { MatchQueue, Match } from './game_elems/match';
+import path = require('path');
 
 dotenv.config();
 
@@ -29,8 +30,14 @@ online[test_p.get_id()] = test_p;
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World from TypeScript!');
+app.use(express.static(path.join(__dirname, '../front-end/build')));
+
+// app.get('/', (req: Request, res: Response) => {
+//   res.send('Hello World from TypeScript!');
+// });
+
+app.get('*', (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '../../front-end/build/index.html'));
 });
 
 
