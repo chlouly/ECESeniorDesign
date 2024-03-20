@@ -107,10 +107,11 @@ app.get('/difficulty', (req: Request, res: Response) => {
 app.put('/joinrandom', (req: Request, res: Response) => {
   if (req.body === undefined) {
     return res.status(400).send("Bad request: no body found");
-  } else if (req.body.id === undefined) {
-    return res.status(400).send("Bad request: no id was given");
-  } else if (typeof req.body.id !== 'number') {
-    return res.status(400).send("Bad request: id was not a number");
+  }
+
+  let fmt_error = validate_match_ins(req.body.id, null);
+  if (fmt_error !== null) {
+    return res.status(400).send(fmt_error);
   }
 
   const id: number = req.body.id;
@@ -142,20 +143,9 @@ app.post('/joingame', (req: Request, res: Response) => {
     return res.status(400).send("Bad request: no body found");
   }
   
-   // Validating request body {id} formatting
-  if (req.body.id === undefined) {
-    return res.status(400).send("Bad request: no id was given");
-  } else if (typeof req.body.id !== 'number') {
-    return res.status(400).send("Bad request: id was not a number");
-  } 
-
-  // Validating request body {gameNumber} formatting
-  if (req.body.gameNumber === undefined) {
-    return res.status(400).send("Bad request: no gameNumber given");
-  } else if (typeof req.body.gameNumber !== 'number') {
-    return res.status(400).send("Bad request: id was not a number");
-  } else if (req.body.gameNumber < 10000 || req.body.gameNumber > 50000) {
-    return res.status(400).send("Bad request: gameNumber should be 5 digits (between 10000 and 50000)");
+  let fmt_error = validate_match_ins(req.body.id, req.body.gameNumber);
+  if (fmt_error !== null) {
+    return res.status(400).send(fmt_error);
   }
 
   // Parsing request data
@@ -196,6 +186,63 @@ app.post('/joingame', (req: Request, res: Response) => {
 });
 
 
+//////////////////////////////////////////////////////////
+// Lets a player leave a match
+//
+// body: {
+//   "id": PLAYER ID NUMBER,
+// }
+//
+// If the player is in a match, it leaves it, if not,
+// then nothing hapens. If there is conflicting backend
+// information, it gets corrected by leaving the game
+// automaticaly
+app.post('/leavegame', (req: Request, res: Response) => {
+  // Making sure the body exists
+  if (req.body === undefined) {
+    return res.status(400).send("Bad request: no body found");
+  }
+
+  let fmt_error = validate_match_ins(req.body.id, null);
+  if (fmt_error !== null) {
+    return res.status(400).send(fmt_error);
+  }
+
+  // Parsing request data and obtaining player data (if any)
+  const id: number = req.body.id;
+  const player: Player | undefined = online[id];
+
+  // Player is not online
+  if (player === undefined) {
+    return res.status(404).send(`Player with id ${id} was not found`);
+  }
+
+  // Player is not in a match
+  if (player.current_game === null) {
+    return res.status(500).send(`Error: Player with id ${id} is not currently in a game`);
+  }
+
+  // Getting match from player
+  const gameNumber: number | null = player.current_game;
+  const match: Match | undefined = matches[gameNumber];
+
+  // Match does not exist, even though the players current gameNumber is for this match
+  if (match === undefined) {
+    player.current_game = null;
+    return res.status(500).send(`Error: Match with gameNumber ${gameNumber}, associated with te player with id: ${id}, did not exist. Player status has been updated.`);
+  } 
+
+  // Leaving match
+  if (!match.leave_game(id)) {
+    player.current_game = null;
+    return res.status(500).send(`Error: Match with gameNumber ${gameNumber}, associated with te player with id: ${id}, did not exist. Player status has been updated. (2)`)
+  }
+
+  // Success
+  return res.status(200).send(`Success: Player with id: ${id} left the match with id: ${gameNumber}`);
+});
+
+
 // Gives the state of all lists dicts and queues that hold game state
 // Logs it to the console
 app.get('/getstate', (req: Request, res: Response) => {
@@ -213,6 +260,44 @@ app.get('*', (req: Request, res: Response) => {
 app.listen(port, () => {
   logger.info(`Server running at http://localhost:${port}`);
 });
+
+
+// Input validation helper functions (to ensure that formatting is correct):
+//
+// If any one of the inputs is null, it means we are not validating that quantity
+// Otherwise it will be checked for correctness, returns an error string if the values fail
+//
+// Returns null if everything passes
+function validate_match_ins(
+  player_id: any, 
+  gameNumber: any
+  ): string | null {
+
+  // Validating the player id if it is needed
+  if (player_id !== null) {
+    if (player_id === undefined) {
+      return "Bad request: no id was given";
+    } else if (typeof player_id !== 'number') {
+      return "Bad request: id was not a number";
+    } 
+  }
+
+  // Validating the gameNumber if it is needed
+  if (gameNumber !== null) {
+    if (gameNumber === undefined) {
+      return "Bad request: no gameNumber given";
+    } else if (typeof gameNumber !== 'number') {
+      return "Bad request: gameNumber was not a number";
+    } else if (gameNumber < 10000 || gameNumber > 50000) {
+      return "Bad request: gameNumber should be 5 digits (between 10000 and 50000)";
+    }
+  }
+
+  // Other validation will go here...
+
+  // all clear
+  return null;
+}
 
 export { 
   process,

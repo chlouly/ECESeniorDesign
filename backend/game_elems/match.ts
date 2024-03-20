@@ -63,22 +63,27 @@ class Match {
         return player;
     }
 
+    public leave_game(id: number): boolean {
+        // Player 1 is the one with this id
+        if ((this.player_1 !== null) && (this.player_1.get_id() === id)) {
+            this.player_1.current_game = null;
+            this.player_1 = null;
+            return true;
+        }
+
+        // Player 2 is the one with this id
+        if ((this.player_2 !== null) && (this.player_2.get_id() === id)) {
+            this.player_2.current_game = null;
+            this.player_2 = null;
+            return true;
+        }
+
+        // None of the statements executed, so the player was not in the match
+        return false;
+    }
+
     // Currently does nothing. Soon will make the game execute 1 turn
     public take_turn() {}
-
-    public quit(): Player[] {
-        let players: Player[] = [];
-
-        if (this.player_1 !== null) {
-            players.push(this.player_1);
-        }
-
-        if (this.player_2 !== null) {
-            players.push(this.player_2);
-        }
-
-        return players
-    }
 }
 
 class MatchQueue {
@@ -122,13 +127,13 @@ class MatchQueue {
         let player: Player | undefined;
 
         if ((player = this.dequeue()) === undefined) {
-            match.quit();
+            //match.quit();
             return -1;
         }
         match.join(player);
 
         if ((player = this.dequeue()) === undefined) {
-            match.quit();
+            //match.quit();
             return -1;
         }
         match.join(player);
