@@ -26,6 +26,7 @@ class Player {
     private level: number = 1;
     private xp: number = 0;
     private difficulty: Difficulty = Difficulty.Easy;
+    public current_game: number | null = null;
 
     // Loads in player data that matches 'id' if it exists,
     // Otherwise it creates new data.

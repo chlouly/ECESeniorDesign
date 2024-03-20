@@ -23,14 +23,25 @@ let random_players = new MatchQueue;
 // Matches that are currently active
 let matches: { [key: number] : Match } = {};
 
-// Just for testing purposes, will delete later
-let test_p: Player = new Player("Chris", 1, [], [], [], null, 10, 0);
-online[test_p.get_id()] = test_p;
+/*
+      TESTING DATA
+*/
+let chris: Player = new Player("Chris", 1, [], [], [], null, 1000, 0);
+online[chris.get_id()] = chris;
+
+let mateusz: Player = new Player("Mateusz", 2, [], [], [], null, 2, 0);
+online[mateusz.get_id()] = mateusz;
+
+let santi: Player = new Player("Santi", 3, [], [], [], null, 2, 0);
+online[santi.get_id()] = santi;
+
+
 
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
 app.use(express.static(path.join(__dirname, '../front-end/build')));
+app.use(express.json());
 
 // app.get('/', (req: Request, res: Response) => {
 //   res.send('Hello World from TypeScript!');
@@ -126,49 +137,59 @@ app.put('/joinrandom', (req: Request, res: Response) => {
 // If a match with matching gameNumber exists then it
 // attempts to join, if not then it attempts to create it.
 app.post('/joingame', (req: Request, res: Response) => {
-  // Validating request body {id}
+  // Validating request body
   if (req.body === undefined) {
     return res.status(400).send("Bad request: no body found");
-  } else if (req.body.id === undefined) {
+  }
+  
+   // Validating request body {id} formatting
+  if (req.body.id === undefined) {
     return res.status(400).send("Bad request: no id was given");
   } else if (typeof req.body.id !== 'number') {
     return res.status(400).send("Bad request: id was not a number");
   } 
 
-  // Validating request body {gameNumber}
+  // Validating request body {gameNumber} formatting
   if (req.body.gameNumber === undefined) {
     return res.status(400).send("Bad request: no gameNumber given");
   } else if (typeof req.body.gameNumber !== 'number') {
     return res.status(400).send("Bad request: id was not a number");
   } else if (req.body.gameNumber < 10000 || req.body.gameNumber > 50000) {
     return res.status(400).send("Bad request: gameNumber should be 5 digits (between 10000 and 50000)");
-  } else if (matches[req.body.gameNumber] !== undefined) {
-    return res.status(400).send(`Bad request: gameNumber ${req.body.gameNumber} is already in use, please choose another`);
   }
 
-  const id = req.body.id;
-  const gameNumber = req.body.gameNumber;
+  // Parsing request data
+  const id: number = req.body.id;
+  const gameNumber: number = req.body.gameNumber;
 
-  if (online[id] === undefined) {
+  // Obtaining player and game data (if any)
+  const player: Player | undefined = online[id];
+  const match: Match | undefined = matches[gameNumber];
+
+  // Player is not online
+  if (player === undefined) {
     return res.status(404).send(`Player with id ${id} was not found`);
   }
 
-  let player = online[id];
+  // Player is already in a match
+  if (player.current_game !== null) {
+    return res.status(500).send(`Error: Could not join match: ${gameNumber}, player with id: ${id} was already in match: ${player.current_game}`);
+  }
 
-  // Match does not exist, create a ne one
-  if (matches[gameNumber] === undefined) {
+  // Match does not exist, create a new one
+  if (match === undefined) {
     const match = new Match(gameNumber);
     match.join(player)
     matches[gameNumber] = match;
     return res.status(200).send(`Success: Match with gameNumber ${gameNumber} created`)
   } 
 
-  // Match does exist
-  if (matches[gameNumber].is_full()) {
-    return res.status(500).send(`Error: Could not joing match with gameNumber ${req.body.gameNumber}, it was full`);
+  // Match does exist and is full
+  if (match.is_full()) {
+    return res.status(500).send(`Error: Could not joing match with gameNumber ${gameNumber}, it was full`);
   }
 
-  // Match does exist and istn full
+  // All other edge cases passed
   matches[gameNumber].join(player)
 
   return res.status(200).send(`Success: Joined match with gameNumber ${gameNumber}`);

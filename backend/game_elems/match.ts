@@ -25,6 +25,21 @@ class Match {
 
     public is_full(): boolean { return (this.occupancy() >= 2) }
 
+    // Takes a player id and checks if that player is in the match
+    public is_in_match(id: number): boolean { 
+        if (this.occupancy() === 0) { return false; }
+
+        if (this.player_1 !== null) {
+            if (this.player_1.get_id() === id) { return true; }
+        }
+
+        if (this.player_2 !== null) {
+            if (this.player_2.get_id() === id) { return true; }
+        }
+
+        return false;
+    } 
+
     public join(player: Player): Player | null {
         if (this.is_full()) {
             return player
@@ -33,12 +48,14 @@ class Match {
         // If player 1 is empty then place in player 1 slot
         if (this.player_1 === null) {
             this.player_1 = player;
+            player.current_game = this.match_number;
             return null;
         }
 
         // If player 2 is empty then place in player 2 slot
         if (this.player_2 === null) {
             this.player_2 = player;
+            player.current_game = this.match_number;
             return null;
         }
 
