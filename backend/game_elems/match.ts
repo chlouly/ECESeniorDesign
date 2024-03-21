@@ -1,10 +1,10 @@
 import { Player } from './player';
-import { matches } from '../app';
+import { matches, online } from '../app';
+
+const MAX_OCCUPANCY: number = 2;
 
 class Match {
-    private player_1: Player | null = null;
-    private player_2: Player | null = null;
-
+    private players: Player[] = [];
     public match_number: number;
 
     public constructor(match_number: number | null) {
@@ -16,74 +16,70 @@ class Match {
         this.match_number = match_number;
     }
 
-    public occupancy(): number {
-        let num = 0;
-        num += (this.player_1 === null)? 0 : 1;
-        num += (this.player_2 === null)? 0 : 1;
-        return num;
+    public occupancy(): number { 
+        return this.players.length 
     }
 
-    public is_full(): boolean { return (this.occupancy() >= 2) }
+    public is_full(): boolean { 
+        return (this.occupancy() >= 2) 
+    }
 
     // Takes a player id and checks if that player is in the match
     public is_in_match(id: number): boolean { 
-        if (this.occupancy() === 0) { return false; }
-
-        if (this.player_1 !== null) {
-            if (this.player_1.get_id() === id) { return true; }
-        }
-
-        if (this.player_2 !== null) {
-            if (this.player_2.get_id() === id) { return true; }
-        }
-
-        return false;
+        return this.players.some(player => player.get_id() === id); 
     } 
 
-    public join(player: Player): Player | null {
-        if (this.is_full()) {
-            return player
-        }
+    public join(player: Player): boolean {
+        // Match is full
+        if (this.is_full()) { return false; }
 
-        // If player 1 is empty then place in player 1 slot
-        if (this.player_1 === null) {
-            this.player_1 = player;
-            player.current_game = this.match_number;
-            return null;
-        }
+        // The player is already in the match
+        if (this.is_in_match(player.get_id())) { return false; }
 
-        // If player 2 is empty then place in player 2 slot
-        if (this.player_2 === null) {
-            this.player_2 = player;
-            player.current_game = this.match_number;
-            return null;
-        }
+        // Add player to the match
+        this.players.push(player);
+        player.current_game = this.match_number;
 
-        // Should never reach this point
-        return player;
+        return true;
     }
 
     public leave_game(id: number): boolean {
-        // Player 1 is the one with this id
-        if ((this.player_1 !== null) && (this.player_1.get_id() === id)) {
-            this.player_1.current_game = null;
-            this.player_1 = null;
+        // player was not in the match
+        if (!this.is_in_match(id)) {
+            return false;
+        }
+
+        // THe desired player is alone in the game so we may as well delete the game
+        if (this.occupancy() <= 1) {
+            this.self_destruct();
             return true;
         }
 
-        // Player 2 is the one with this id
-        if ((this.player_2 !== null) && (this.player_2.get_id() === id)) {
-            this.player_2.current_game = null;
-            this.player_2 = null;
-            return true;
-        }
+        const idx = this.players.map(player => player.get_id()).indexOf(id)
 
-        // None of the statements executed, so the player was not in the match
-        return false;
+        if (idx === -1) { return false; }
+
+        online[idx].current_game = null;
+        this.players = this.players.filter(player => player.get_id() !== id);
+
+        return true;
     }
 
     // Currently does nothing. Soon will make the game execute 1 turn
     public take_turn() {}
+
+    public self_destruct() {
+        // Change the status of any and all players
+        this.players
+            .map(player => player.get_id())
+            .map((id) => {
+                online[id].current_game = null;
+            }
+        );
+
+        // Delete this game from the game dictionary
+        delete matches[this.match_number];
+    }
 }
 
 class MatchQueue {

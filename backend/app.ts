@@ -6,6 +6,7 @@ import { setup_rds_tables } from "./rds_config";
 import { Player, Difficulty } from "./game_elems/player";
 import { MatchQueue, Match } from './game_elems/match';
 import path = require('path');
+import { ResCode } from './error';
 
 dotenv.config();
 
@@ -43,10 +44,6 @@ const port = process.env.SERVER_PORT || 3000; // You can choose any port
 app.use(express.static(path.join(__dirname, '../front-end/build')));
 app.use(express.json());
 
-// app.get('/', (req: Request, res: Response) => {
-//   res.send('Hello World from TypeScript!');
-// });
-
 
 ///////////////////////////////////////////////////////////
 // This endpoint takes a user ID and returns their username
@@ -54,22 +51,22 @@ app.get('/username', (req: Request, res: Response) => {
   // Check if id exists and is a string
   const idStr = req.query.id;
   if (typeof idStr !== 'string') {
-    return res.status(400).send("Bad request: id was undefined or not a string");
+    return res.status(ResCode.PIDNaN).end();
   }
 
   // Convert id to a number
   const id = parseInt(idStr);
   if (isNaN(id)) {
-    return res.status(400).send("Bad request: id is not a number");
+    return res.status(ResCode.PIDNaN).end();
   }
 
   const player: Player | undefined = online[id];
 
   if (player === undefined) {
-    return res.status(404).send(`Player with id ${id} not found, they either do not exist or are offline`);
+    return res.status(ResCode.NotFound).end();
   }
 
-  res.status(200).send(player.get_name());
+  res.status(ResCode.Ok).json({"username" : player.get_name()});
 });
 
 
@@ -79,22 +76,22 @@ app.get('/difficulty', (req: Request, res: Response) => {
   // Check if id exists and is a string
   const idStr = req.query.id;
   if (typeof idStr !== 'string') {
-    return res.status(400).send("Bad request: id was undefined or not a string");
+    return res.status(ResCode.PIDNaN).end();
   }
 
   // Convert id to a number
   const id = parseInt(idStr);
   if (isNaN(id)) {
-    return res.status(400).send("Bad request: id is not a number");
+    return res.status(ResCode.PIDNaN).end();
   }
 
   const player: Player | undefined = online[id];
 
   if (player === undefined) {
-    return res.status(404).send(`Player with id ${id} not found, they either do not exist or are offline`);
+    return res.status(ResCode.NotFound).end();
   }
 
-  res.status(200).send(player.get_difficulty());
+  res.status(ResCode.Ok).json({"difficulty" : player.get_difficulty()});
 });
 
 
@@ -104,21 +101,21 @@ app.get('/difficulty', (req: Request, res: Response) => {
 // body: {
 //   "id": PLAYER ID NUMBER
 // }
-app.put('/joinrandom', (req: Request, res: Response) => {
+app.post('/joinrandom', (req: Request, res: Response) => {
   if (req.body === undefined) {
-    return res.status(400).send("Bad request: no body found");
+    return res.status(ResCode.NoBody).end();
   }
 
-  let fmt_error = validate_match_ins(req.body.id, null);
-  if (fmt_error !== null) {
-    return res.status(400).send(fmt_error);
+  let code: ResCode = validate_match_ins(req.body.id, null);
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
   }
 
   const id: number = req.body.id;
   const player: Player | undefined = online[id];
 
   if (player === undefined) {
-    return res.status(404).send(`Player with id ${id} was not found`);
+    return res.status(ResCode.NotFound).end;
   }
 
   
@@ -140,49 +137,54 @@ app.put('/joinrandom', (req: Request, res: Response) => {
 app.post('/joingame', (req: Request, res: Response) => {
   // Validating request body
   if (req.body === undefined) {
-    return res.status(400).send("Bad request: no body found");
+    return res.status(ResCode.NoBody).end();
   }
   
-  let fmt_error = validate_match_ins(req.body.id, req.body.gameNumber);
-  if (fmt_error !== null) {
-    return res.status(400).send(fmt_error);
+  let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber);
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
   }
 
-  // Parsing request data
+  // Parsing player request data
   const id: number = req.body.id;
-  const gameNumber: number = req.body.gameNumber;
-
-  // Obtaining player and game data (if any)
   const player: Player | undefined = online[id];
-  const match: Match | undefined = matches[gameNumber];
 
   // Player is not online
   if (player === undefined) {
-    return res.status(404).send(`Player with id ${id} was not found`);
+    return res.status(ResCode.NotFound).end();
   }
 
   // Player is already in a match
   if (player.current_game !== null) {
-    return res.status(500).send(`Error: Could not join match: ${gameNumber}, player with id: ${id} was already in match: ${player.current_game}`);
+    return res.status(ResCode.PlyrBusy).end();
   }
+
+  // gameNumber was empty so we create a game with a random number
+  if (req.body.gameNumber === '') {
+    const match = new Match(null);
+    match.join(player)
+    matches[match.match_number] = match;
+    return res.status(ResCode.Ok).json({'gameNumber' : match.match_number})
+  }
+
+  // Parsing gameNumber request data
+  const gameNumber: number = req.body.gameNumber;
+  const match: Match | undefined = matches[gameNumber];
 
   // Match does not exist, create a new one
   if (match === undefined) {
-    const match = new Match(gameNumber);
-    match.join(player)
-    matches[gameNumber] = match;
-    return res.status(200).send(`Success: Match with gameNumber ${gameNumber} created`)
+    return res.status(ResCode.NotFound).end();
   } 
 
   // Match does exist and is full
   if (match.is_full()) {
-    return res.status(500).send(`Error: Could not joing match with gameNumber ${gameNumber}, it was full`);
+    return res.status(ResCode.MtchFll).end();
   }
 
   // All other edge cases passed
-  matches[gameNumber].join(player)
+  match.join(player)
 
-  return res.status(200).send(`Success: Joined match with gameNumber ${gameNumber}`);
+  return res.status(ResCode.Ok).send({'gameNumber' : gameNumber});
 });
 
 
@@ -200,12 +202,12 @@ app.post('/joingame', (req: Request, res: Response) => {
 app.post('/leavegame', (req: Request, res: Response) => {
   // Making sure the body exists
   if (req.body === undefined) {
-    return res.status(400).send("Bad request: no body found");
+    return res.status(ResCode.NoBody).end();
   }
 
-  let fmt_error = validate_match_ins(req.body.id, null);
-  if (fmt_error !== null) {
-    return res.status(400).send(fmt_error);
+  let code: ResCode = validate_match_ins(req.body.id, null);
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
   }
 
   // Parsing request data and obtaining player data (if any)
@@ -214,12 +216,12 @@ app.post('/leavegame', (req: Request, res: Response) => {
 
   // Player is not online
   if (player === undefined) {
-    return res.status(404).send(`Player with id ${id} was not found`);
+    return res.status(ResCode.NotFound).end();
   }
 
   // Player is not in a match
   if (player.current_game === null) {
-    return res.status(500).send(`Error: Player with id ${id} is not currently in a game`);
+    return res.status(ResCode.Ok).end();
   }
 
   // Getting match from player
@@ -229,28 +231,31 @@ app.post('/leavegame', (req: Request, res: Response) => {
   // Match does not exist, even though the players current gameNumber is for this match
   if (match === undefined) {
     player.current_game = null;
-    return res.status(500).send(`Error: Match with gameNumber ${gameNumber}, associated with te player with id: ${id}, did not exist. Player status has been updated.`);
+    return res.status(ResCode.NotFound).end();
   } 
 
   // Leaving match
   if (!match.leave_game(id)) {
     player.current_game = null;
-    return res.status(500).send(`Error: Match with gameNumber ${gameNumber}, associated with te player with id: ${id}, did not exist. Player status has been updated. (2)`)
+    return res.status(ResCode.GnrlErr).end();
   }
 
   // Success
-  return res.status(200).send(`Success: Player with id: ${id} left the match with id: ${gameNumber}`);
+  return res.status(ResCode.Ok).end();
 });
 
 
 // Gives the state of all lists dicts and queues that hold game state
 // Logs it to the console
 app.get('/getstate', (req: Request, res: Response) => {
+  console.log("\n\n\nGET STATE ENDPOINT\n\nONLINE:")
   console.log(online);
+  console.log("\nRANDOM QUEUE:")
   console.log(random_players);
+  console.log("\nMATCHES:")
   console.log(matches);
 
-  return res.status(200);
+  return res.status(ResCode.Ok).json({'message' : "CHECK CONSOLE"});
 });
 
 app.get('*', (req: Request, res: Response) => {
@@ -271,35 +276,38 @@ app.listen(port, () => {
 function validate_match_ins(
   player_id: any, 
   gameNumber: any
-  ): string | null {
+  ): ResCode {
 
   // Validating the player id if it is needed
   if (player_id !== null) {
     if (player_id === undefined) {
-      return "Bad request: no id was given";
+      return ResCode.PIDUndef;
     } else if (typeof player_id !== 'number') {
-      return "Bad request: id was not a number";
+      return ResCode.PIDNaN;
     } 
   }
 
   // Validating the gameNumber if it is needed
   if (gameNumber !== null) {
     if (gameNumber === undefined) {
-      return "Bad request: no gameNumber given";
+      return ResCode.MtchUndef;
+    } else if (gameNumber === '') {
+      return ResCode.Ok;  // No game number was given but the field exists (should bypass the other conditions)
     } else if (typeof gameNumber !== 'number') {
-      return "Bad request: gameNumber was not a number";
+      return ResCode.MtchNaN;
     } else if (gameNumber < 10000 || gameNumber > 50000) {
-      return "Bad request: gameNumber should be 5 digits (between 10000 and 50000)";
+      return ResCode.MtchOutBnds;
     }
   }
 
   // Other validation will go here...
 
   // all clear
-  return null;
+  return ResCode.Ok;
 }
 
 export { 
   process,
-  matches
+  matches,
+  online
 }
