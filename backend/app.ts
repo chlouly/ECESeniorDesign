@@ -45,6 +45,46 @@ app.use(express.static(path.join(__dirname, '../front-end/build')));
 app.use(express.json());
 
 
+//////////////////////////////////////////////////////////
+// Lets a player save ther progress and logout
+//
+// body: {
+//   "id": PLAYER ID NUMBER
+// }
+//
+// Saves a player's state to the database and removes them
+// from the 'online' dictionary
+app.delete('/logout', (req: Request, res: Response) => {
+  // Validating request body
+  if (req.body === undefined) {
+    return res.status(ResCode.NoBody).end();
+  }
+  
+  // Parse for errors
+  let code: ResCode = validate_match_ins(req.body.id, null);
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
+  }
+
+  // Parse ID and Player data
+  const id: number = req.body.id;
+  const player: Player | undefined = online[id];
+
+  // Player isn't online
+  if (player === undefined) {
+    return res.status(ResCode.NotFound).end();
+  }
+
+  // Save Player Data
+  player.save2db();
+
+  // Take player offline
+  delete online[id];
+
+  return res.status(ResCode.Ok).end();
+});
+
+
 ///////////////////////////////////////////////////////////
 // This endpoint takes a user ID and returns their username
 app.get('/username', (req: Request, res: Response) => {
