@@ -8,7 +8,7 @@ function GameInterface() {
   const [question, setQuestion] = useState({});
   const [monster1Data, setMonster1Data] = useState({});
   const [monster2Data, setMonster2Data] = useState({});
- const [gameNumber, setGameNumber] = useState("123"); 
+  const [gameNumber, setGameNumber] = useState(""); 
 
   const [actions, setActions] = useState([
     { name: "Attack", points: 5 },
@@ -59,21 +59,14 @@ function GameInterface() {
   };
 
   useEffect(() => {
+    let gameNumber = window.location.pathname.split("/").pop();
+    console.log(gameNumber);
+
+    setGameNumber(gameNumber);
     fetchInitialGameData();
-   joinGame();
+
   }, []);
 
-  const joinGame = async () => {
-    try {
-      const response = await fetch("/joingame", {
-        method: "POST",
-      });
-      const data = await response.json();
-      setGameNumber(data.gameNumber);
-    } catch (error) {
-      console.error("Error joining game:", error);
-    }
-  };
 
   return (
     <div
