@@ -6,8 +6,8 @@ const JoinGamePage = () => {
   const navigate = useNavigate();
   const handleJoinGame = () => {
     // Make a request to the server to join the game
-    // navigate(`/game/${gameNumber}`); for example
-    navigate(`/game`);
+    navigate(`/game/${gameNumber}`);
+    // navigate(`/game`);
     console.log(`Joining game: ${gameNumber}`);
   };
 

@@ -9,6 +9,7 @@ import StartGamePage from './pages/StartGamePage';
 // This is the main router for the application
 
 const AppRouter = () => {
+
     return (
         <Router>
             <Routes>
@@ -17,7 +18,7 @@ const AppRouter = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/join" element={<JoinGamePage />} />
                 <Route path="/start" element={<StartGamePage />} />
-
+                <Route path={`/game/:gameID`} element={<GameInterface />} />
             </Routes>
         </Router>
     );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FiPlay } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+// import { Request } from ''; 
 
 const StartGamePage = () => {
   const [gameNumber, setGameNumber] = useState('12345'); // Santi generate it dinamitacally with the backend API
@@ -10,7 +11,33 @@ const StartGamePage = () => {
     // Make a request to the server to start the game
     // navigate(`/game/${gameNumber}`); for example
     console.log('Game started');
-    navigate('/game');
+
+    const user_ID = 1;
+    
+    fetch('/joingame', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: user_ID, gameNumber: '' })
+    })
+      .then((response) => {
+        console.log(response);
+        if (response.status === 200) {
+          return response.json();
+        } else {
+          throw new Error('Failed to join game');
+        }
+      })
+      .then((data) => {
+        setGameNumber(data.gameNumber);
+        navigate(`/game/${data.gameNumber}`);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+    navigate(`/game/${gameNumber}`); 
   };
 
   return (

@@ -8,6 +8,7 @@ function GameInterface() {
   const [question, setQuestion] = useState({});
   const [monster1Data, setMonster1Data] = useState({});
   const [monster2Data, setMonster2Data] = useState({});
+ const [gameNumber, setGameNumber] = useState("123"); 
 
   const [actions, setActions] = useState([
     { name: "Attack", points: 5 },
@@ -33,6 +34,7 @@ function GameInterface() {
         health: 100,
       },
     };
+
     setParagraph(gameData.paragraph);
     setQuestion(gameData.question);
     setMonster1Data(gameData.monster1);
@@ -56,10 +58,22 @@ function GameInterface() {
     // I will also get game data back from the server
   };
 
-
   useEffect(() => {
-    fetchInitialGameData(); 
+    fetchInitialGameData();
+   joinGame();
   }, []);
+
+  const joinGame = async () => {
+    try {
+      const response = await fetch("/joingame", {
+        method: "POST",
+      });
+      const data = await response.json();
+      setGameNumber(data.gameNumber);
+    } catch (error) {
+      console.error("Error joining game:", error);
+    }
+  };
 
   return (
     <div
@@ -75,9 +89,10 @@ function GameInterface() {
         <div className="text-blue-700 flex flex-col mt-2 space-y-2">
           {question.options?.map((option, index) => (
             <button
-            key={index}
-            className="px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white">
-                {option}
+              key={index}
+              className="px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white"
+            >
+              {option}
             </button>
           ))}
         </div>
@@ -101,7 +116,7 @@ function GameInterface() {
 
       {/* MENU */}
 
-      <div className="col-span-2 bg-blue-100 rounded-lg shadow p-4 mt-4">
+      <div className="col-span-2 bg-blue-100 rounded-lg shadow p-4 mt-4 relative">
         <p className="text-blue-800 font-semibold mb-2">Choose an action:</p>
         <div className=" items-center space-x-4">
           {actions.map((action, index) => (
@@ -124,6 +139,9 @@ function GameInterface() {
         <p className="text-blue-800 font-semibold mt-4">
           Points Available: {pointsAvailable}
         </p>
+        <div className="absolute bottom-0 right-0 bg-white p-2 rounded-lg shadow">
+          <p className="text-gray-800 font-semibold">Game Number: {gameNumber}</p>
+        </div>
       </div>
 
       <div className="flex flex-col col-span-1 row-span-2 items-center">
