@@ -16,50 +16,49 @@ function GameInterface() {
 
   const [pointsAvailable, setPointsAvailable] = useState(20);
 
-  const fetchParagraph = async () => {
+  const fetchInitialGameData = async () => {
     // Replace with actual API call
-    const paragraphData = "This is a sample paragraph from the mock API.";
-    setParagraph(paragraphData);
-  };
-
-  const fetchQuestion = async () => {
-    // Replace with actual API call
-    const questionData = {
-      text: "Sample Question: Which of the following is true?",
-      options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+    const gameData = {
+      paragraph: "This is a sample paragraph from the mock API.",
+      question: {
+        text: "Sample Question: Which of the following is true?",
+        options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+      },
+      monster1: {
+        name: "Monster 1",
+        health: 100,
+      },
+      monster2: {
+        name: "Monster 2",
+        health: 100,
+      },
     };
-    setQuestion(questionData);
+    setParagraph(gameData.paragraph);
+    setQuestion(gameData.question);
+    setMonster1Data(gameData.monster1);
+    setMonster2Data(gameData.monster2);
   };
 
-  const fetchMonsterData = async (monsterNumber) => {
+  const handleActionClick = (action) => {
     // Replace with actual API call
-    const data = {
-      health: "100%",
-      name: monsterNumber === 1 ? "Kraken" : "Leviathan",
-    };
-    if (monsterNumber === 1) {
-      setMonster1Data(data);
-    } else {
-      setMonster2Data(data);
-    }
+    // Post, Attack, Heal
+    // Gamenumber
+    // PlayerNumber
+
+    // I will also get game data back from the server
+  };
+  const handleWaitForOtherPlayer = () => {
+    // Replace with actual API call
+    // Post, WaitForOtherPlayer
+    // Gamenumber
+    // PlayerNumber
+
+    // I will also get game data back from the server
   };
 
-  const fetchActions = async () => {
-    // Replace with actual API call
-    const actionsData = [
-      { name: "Attack", points: 5 },
-      { name: "Heal", points: 10 },
-      // Add more actions as needed
-    ];
-    setActions(actionsData);
-  };
 
   useEffect(() => {
-    fetchParagraph();
-    fetchQuestion();
-    fetchMonsterData(1);
-    fetchMonsterData(2);
-    fetchActions();
+    fetchInitialGameData(); 
   }, []);
 
   return (
