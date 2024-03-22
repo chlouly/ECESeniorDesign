@@ -1,10 +1,10 @@
 import { Player } from './player';
-import { matches } from '../app';
+import { matches, online } from '../app';
+
+const MAX_OCCUPANCY: number = 2;
 
 class Match {
-    private player_1: Player | null = null;
-    private player_2: Player | null = null;
-
+    private players: Player[] = [];
     public match_number: number;
 
     public constructor(match_number: number | null) {
@@ -16,51 +16,69 @@ class Match {
         this.match_number = match_number;
     }
 
-    public occupancy(): number {
-        let num = 0;
-        num += (this.player_1 === null)? 0 : 1;
-        num += (this.player_2 === null)? 0 : 1;
-        return num;
+    public occupancy(): number { 
+        return this.players.length 
     }
 
-    public is_full(): boolean { return (this.occupancy() >= 2) }
+    public is_full(): boolean { 
+        return (this.occupancy() >= 2) 
+    }
 
-    public join(player: Player): Player | null {
-        if (this.is_full()) {
-            return player
+    // Takes a player id and checks if that player is in the match
+    public is_in_match(id: number): boolean { 
+        return this.players.some(player => player.get_id() === id); 
+    } 
+
+    public join(player: Player): boolean {
+        // Match is full
+        if (this.is_full()) { return false; }
+
+        // The player is already in the match
+        if (this.is_in_match(player.get_id())) { return false; }
+
+        // Add player to the match
+        this.players.push(player);
+        player.current_game = this.match_number;
+
+        return true;
+    }
+
+    public leave_game(id: number): boolean {
+        // player was not in the match
+        if (!this.is_in_match(id)) {
+            return false;
         }
 
-        // If player 1 is empty then place in player 1 slot
-        if (this.player_1 === null) {
-            this.player_1 = player;
-            return null;
+        // THe desired player is alone in the game so we may as well delete the game
+        if (this.occupancy() <= 1) {
+            this.self_destruct();
+            return true;
         }
 
-        // If player 2 is empty then place in player 2 slot
-        if (this.player_2 === null) {
-            this.player_2 = player;
-            return null;
-        }
+        const idx = this.players.map(player => player.get_id()).indexOf(id)
 
-        // Should never reach this point
-        return player;
+        if (idx === -1) { return false; }
+
+        online[idx].current_game = null;
+        this.players = this.players.filter(player => player.get_id() !== id);
+
+        return true;
     }
 
     // Currently does nothing. Soon will make the game execute 1 turn
     public take_turn() {}
 
-    public quit(): Player[] {
-        let players: Player[] = [];
+    public self_destruct() {
+        // Change the status of any and all players
+        this.players
+            .map(player => player.get_id())
+            .map((id) => {
+                online[id].current_game = null;
+            }
+        );
 
-        if (this.player_1 !== null) {
-            players.push(this.player_1);
-        }
-
-        if (this.player_2 !== null) {
-            players.push(this.player_2);
-        }
-
-        return players
+        // Delete this game from the game dictionary
+        delete matches[this.match_number];
     }
 }
 
@@ -105,13 +123,13 @@ class MatchQueue {
         let player: Player | undefined;
 
         if ((player = this.dequeue()) === undefined) {
-            match.quit();
+            //match.quit();
             return -1;
         }
         match.join(player);
 
         if ((player = this.dequeue()) === undefined) {
-            match.quit();
+            //match.quit();
             return -1;
         }
         match.join(player);
