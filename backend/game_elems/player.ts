@@ -3,7 +3,9 @@
 //  definitions for users
 //
 
+import { ResCode } from '../error';
 import { Egg } from './egg';
+import { Monster } from './monster';
 
 const NUM_MONSTERS_ROSTER: number = 6;
 const NUM_MONSTERS_BENCH: number = 120;
@@ -16,17 +18,27 @@ enum Difficulty {
     Expert = "EXPERT"
 }
 
+enum Action {
+    Attack,
+    Heal,
+    SwapMonster,
+}
+
+const validActions = new Set(Object.values(Action));
+
 class Player {
     private name: string;   // Username
     private id: number;     // Actual user ID
     public monsters_roster: number[] = [];     // Monster ids to be used in fights
     public monsters_bench: number[] = [];      // Monster ids stored away for later
     public eggs: number[] = [];                // Egg ids that the user has
-    public currently_hatching_egg: number | null = null;   // Egg that is currently being hatched
     private level: number = 1;
     private xp: number = 0;
     private difficulty: Difficulty = Difficulty.Easy;
     public current_game: number | null = null;
+
+    public currently_hatching_egg: number | null = null;   // Egg that is currently being hatched
+    public current_monster: Monster | null = null;  
 
     // Loads in player data that matches 'id' if it exists,
     // Otherwise it creates new data.
@@ -104,6 +116,43 @@ class Player {
         this.xp = 0;
         this.level += 1;
         this.increase_xp(xp - level_up_xp);
+    }
+
+
+    public perform_action(opponent: Player, action: Action, m_id: number | null): ResCode {
+        switch (action) {
+            case (Action.Attack): {
+                return this.attack(opponent);
+            }
+            case (Action.Heal): {
+                return this.heal();
+            }
+            case (Action.SwapMonster): {
+                if (m_id === null) {
+                    return ResCode.SwapWoutMID;
+                }
+
+                return this.swap_primary(m_id);
+            }
+            default: {
+                return ResCode.InvalidAction;
+            }
+        }
+    }
+
+    // TODO
+    private attack(player: Player): ResCode {
+        return ResCode.NotImplemented
+    }
+
+    // TODO
+    private heal(): ResCode {
+        return ResCode.NotImplemented;
+    }
+
+    // TODO
+    private swap_primary(monster_id: number): ResCode {
+        return ResCode.NotImplemented;
     }
 
 
@@ -284,6 +333,8 @@ export {
     Player,
     PlayerRow,
     Difficulty,
+    Action,
+    validActions,
     row2player,
     player2row
 }
