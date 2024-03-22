@@ -22,6 +22,7 @@ const StartGamePage = () => {
         if (response.status === 200) {
           return response.json(); // Parsing the JSON response body
         } else {
+          console.error('Not response 200');
           throw new Error('Failed to join game');
         }
       })
@@ -31,10 +32,9 @@ const StartGamePage = () => {
         navigate(`/game/${data.gameNumber}`); // Navigating using the updated game number
       })
       .catch(error => {
+        alert(error);
         console.error(error);
       });
-
-    navigate(`/game/${gameNumber}`); 
   };
   
 
