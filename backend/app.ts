@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as dotenv from 'dotenv';
 import { logger } from "./logger";
 import { setup_rds_tables } from "./rds_config";
-import { Player, Difficulty } from "./game_elems/player";
+import { Player, Difficulty, Action, validActions } from "./game_elems/player";
 import { MatchQueue, Match } from './game_elems/match';
 import path = require('path');
 import { ResCode } from './error';
@@ -61,7 +61,7 @@ app.delete('/logout', (req: Request, res: Response) => {
   }
   
   // Parse for errors
-  let code: ResCode = validate_match_ins(req.body.id, null);
+  let code: ResCode = validate_match_ins(req.body.id, null, null, null);
   if (code !== ResCode.Ok) {
     return res.status(code).end();
   }
@@ -146,7 +146,7 @@ app.post('/joinrandom', (req: Request, res: Response) => {
     return res.status(ResCode.NoBody).end();
   }
 
-  let code: ResCode = validate_match_ins(req.body.id, null);
+  let code: ResCode = validate_match_ins(req.body.id, null, null, null);
   if (code !== ResCode.Ok) {
     return res.status(code).end();
   }
@@ -180,7 +180,7 @@ app.post('/joingame', (req: Request, res: Response) => {
     return res.status(ResCode.NoBody).end();
   }
   
-  let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber);
+  let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber, null, null);
   if (code !== ResCode.Ok) {
     return res.status(code).end();
   }
@@ -229,6 +229,97 @@ app.post('/joingame', (req: Request, res: Response) => {
 
 
 //////////////////////////////////////////////////////////
+// Lets a player take their turn in the game
+//
+// body: {
+//   "id": PLAYER ID NUMBER,
+//   "gameNumber": GAME NUMBER,
+//   "action": ACTION TYPE,
+//   "m_id": MONSTER ID (in case of a swap)
+// }
+//
+// If the player is in a match, it leaves it, if not,
+// then nothing hapens. If there is conflicting backend
+// information, it gets corrected by leaving the game
+// automaticaly
+app.post('/action', (req: Request, res: Response) => {
+  // Validating request body
+  if (req.body === undefined) {
+    return res.status(ResCode.NoBody).end();
+  }
+  
+  // Parse for errors
+  let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber, req.body.action, req.body.m_id);
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
+  }
+
+  // Parse values
+  const p_id: number = req.body.id;
+  const gameNumber: number = req.body.gameNumber;
+  const action: Action = req.body.action as Action;
+  const m_id: number | null = (action === Action.SwapMonster)? req.body.m_id : null;
+
+
+  // Get objects
+  const match: Match | undefined = matches[gameNumber];
+
+  // Match or player DNE
+  if (match === undefined || online[p_id] === undefined) {
+    return res.status(ResCode.NotFound);
+  }
+
+  // TODO: Will soon return game state
+  return res.status(match.take_turn(p_id, action, m_id)).end();
+});
+
+
+//////////////////////////////////////////////////////////
+// Waits until the player's turn to move
+//
+// body: {
+//   "id": PLAYER ID NUMBER,
+//   "gameNumber": GAME NUMBER
+// }
+//
+// If the player is in a match, it leaves it, if not,
+// then nothing hapens. If there is conflicting backend
+// information, it gets corrected by leaving the game
+// automaticaly
+app.get('/waittomove', async (req: Request, res: Response) => {
+  // Validating request body
+  if (req.body === undefined) {
+    return res.status(ResCode.NoBody).end();
+  }
+  
+  // Parse for errors
+  let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber, null, null);
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
+  }
+
+  // Parsing body
+  const id: number = req.body.id;
+  const gameNumber: number = req.body.gameNumber;
+
+  // Get objects
+  const match: Match | undefined = matches[gameNumber];
+
+  // Match or player DNE
+  if (match === undefined || online[id] === undefined) {
+    return res.status(ResCode.NotFound);
+  }
+
+  // Wait for 
+  let wait_code: ResCode;
+  wait_code = await match.wait_to_move(id);
+
+  // TODO: Will soon return game state 
+  return res.status(wait_code).end() ;
+});
+
+
+//////////////////////////////////////////////////////////
 // Lets a player leave a match
 //
 // body: {
@@ -245,7 +336,7 @@ app.post('/leavegame', (req: Request, res: Response) => {
     return res.status(ResCode.NoBody).end();
   }
 
-  let code: ResCode = validate_match_ins(req.body.id, null);
+  let code: ResCode = validate_match_ins(req.body.id, null, null, null);
   if (code !== ResCode.Ok) {
     return res.status(code).end();
   }
@@ -315,7 +406,9 @@ app.listen(port, () => {
 // Returns null if everything passes
 function validate_match_ins(
   player_id: any, 
-  gameNumber: any
+  gameNumber: any,
+  actionType: any,
+  monster_id: any,
   ): ResCode {
 
   // Validating the player id if it is needed
@@ -340,6 +433,28 @@ function validate_match_ins(
     }
   }
 
+  let is_swap: boolean = false;
+  if (actionType !== null) {
+    if (actionType === undefined) {
+      return ResCode.ActionUndef;
+    } else if (typeof actionType !== 'number') {
+      return ResCode.ActionNaN;
+    } else if (!validActions.has(actionType)) {
+      return ResCode.InvalidAction;
+    } else if (actionType as Action === Action.SwapMonster) {
+      is_swap = true
+    }
+  }
+
+  // Validating the player id if it is needed
+  if (monster_id !== null && is_swap) {
+    if (monster_id === undefined) {
+      return ResCode.PIDUndef;
+    } else if (typeof monster_id !== 'number') {
+      return ResCode.PIDNaN;
+    } 
+  }
+
   // Other validation will go here...
 
   // all clear
@@ -347,7 +462,6 @@ function validate_match_ins(
 }
 
 export { 
-  process,
   matches,
   online
 }
