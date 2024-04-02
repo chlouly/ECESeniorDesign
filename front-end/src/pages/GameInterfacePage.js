@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import monster1 from "../images/monster_1.webp";
 import monster2 from "../images/monster_2.webp";
 import battle_arena from "../images/battle_arena.jpg";
-import useNavigate from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function GameInterface() {
   const [paragraph, setParagraph] = useState("");
@@ -212,7 +212,7 @@ function GameInterface() {
         <p className="text-blue-800 font-semibold mt-4">
           Points Available: {pointsAvailable}
         </p>
-        <div className="absolute bottom-0 right-0 bg-white p-2 rounded-lg shadow">
+        <div className="absolute bottom-0 right-0 bg-white p-4 rounded-lg shadow space-y-4">
           <p className="text-gray-800 font-semibold">Game Number: {gameNumber}</p>
           <button
             className="px-4 py-2 rounded-lg shadow bg-red-500 hover:bg-red-600 text-white"
