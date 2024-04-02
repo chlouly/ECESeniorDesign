@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import monster1 from "../images/monster_1.webp";
 import monster2 from "../images/monster_2.webp";
 import battle_arena from "../images/battle_arena.jpg";
+import useNavigate from "react-router-dom";
 
 function GameInterface() {
   const [paragraph, setParagraph] = useState("");
@@ -9,13 +10,37 @@ function GameInterface() {
   const [monster1Data, setMonster1Data] = useState({});
   const [monster2Data, setMonster2Data] = useState({});
   const [gameNumber, setGameNumber] = useState(""); 
-
+  const navigate = useNavigate();
   const [actions, setActions] = useState([
     { name: "Attack", points: 5 },
     { name: "Heal", points: 10 },
   ]);
 
   const [pointsAvailable, setPointsAvailable] = useState(20);
+
+  const handleLeaveGame = () => {
+    fetch("/leavegame", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: 1,
+        gameNumber: gameNumber,
+      }),
+    }).then((response) => {
+      if (response.status === 200) {
+        navigate("/");
+      } else {
+        console.error("Not response 200");
+        throw new Error("Failed to leave game");
+      }
+    }).catch((error) => {
+      alert(error);
+      console.error(error);
+    });
+  };
+
 
   const fetchInitialGameData = async () => {
     // Replace with actual API call
@@ -189,6 +214,12 @@ function GameInterface() {
         </p>
         <div className="absolute bottom-0 right-0 bg-white p-2 rounded-lg shadow">
           <p className="text-gray-800 font-semibold">Game Number: {gameNumber}</p>
+          <button
+            className="px-4 py-2 rounded-lg shadow bg-red-500 hover:bg-red-600 text-white"
+            onClick={handleLeaveGame}
+          >
+            Leave Game
+          </button>
         </div>
       </div>
 
