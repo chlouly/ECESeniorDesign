@@ -42,14 +42,69 @@ function GameInterface() {
   };
 
   const handleActionClick = (action) => {
-    // Replace with actual API call
-    // Post, Attack, Heal
-    // Gamenumber
-    // PlayerNumber
+    fetch("/action", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: 1,
+        gameNumber: gameNumber,
+        action: action,
+        m_id: 1,
+      }),
+    }).then((response) => {
+      if (response.status === 200) {
+        return response.json();
+      } else {
+        console.error("Not response 200");
+        throw new Error("Failed to perform action");
+      }
+    }).then((data) => {
+      // Data should have the format { gameData: YOUR_GAME_DATA }
+      setMonster1Data(data.monster1);
+      setMonster2Data(data.monster2);
+      setPointsAvailable(data.pointsAvailable);
+    }).catch((error) => {
+      alert(error);
+      console.error(error);
+    });
+
+    // Make a new API call to wait for the other player. Time out after 15 seconds.
+    setTimeout(() => {
+      handleWaitForOtherPlayer();
+    }, 15000);
 
     // I will also get game data back from the server
   };
   const handleWaitForOtherPlayer = () => {
+
+    fetch('/waittomove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 1, gameNumber: gameNumber })
+    })
+      .then(response => {
+        if (response.status === 200) {
+          return response.json();
+        } else {
+          console.error('Not response 200');
+          throw new Error('Failed to wait for other player');
+        }
+      })
+      .then(data => {
+        // Data should have the format { gameData: YOUR_GAME_DATA }
+        setMonster1Data(data.monster1);
+        setMonster2Data(data.monster2);
+        setPointsAvailable(data.pointsAvailable);
+      })
+      .catch(error => {
+        alert(error);
+        console.error(error);
+      });
+      
     // Replace with actual API call
     // Post, WaitForOtherPlayer
     // Gamenumber
@@ -121,7 +176,7 @@ function GameInterface() {
                   : "bg-gray-500"
               } text-white`}
               onClick={() => {
-                /* handle action click */
+                handleActionClick(action);
               }}
               disabled={pointsAvailable < action.points}
             >
