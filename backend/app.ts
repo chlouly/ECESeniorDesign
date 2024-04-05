@@ -7,8 +7,25 @@ import { Player, Difficulty, Action, validActions } from "./game_elems/player";
 import { MatchQueue, Match } from './game_elems/match';
 import path = require('path');
 import { ResCode } from './error';
+import mysql from 'mysql';
+import e = require('express');
 
 dotenv.config();
+
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: 'mydatabase'
+});
+
+connection.connect((err: mysql.MysqlError) => {
+  if (err) {
+    logger.error('Error connecting to MySQL:', err);
+  } else {
+    logger.info('Connected to MySQL');
+  }
+});
 
 setup_rds_tables();
 
@@ -387,6 +404,19 @@ app.get('/getstate', (req: Request, res: Response) => {
   console.log(matches);
 
   return res.status(ResCode.Ok).json({'message' : "CHECK CONSOLE"});
+});
+
+// Returns a random paragraph from the database
+app.get('/randomparagraph', (req, res) => {
+  const query = 'SELECT * FROM mytable ORDER BY RAND() LIMIT 1';
+
+  connection.query(query, (error: any, results: any) => {
+      if (error) {
+          res.status(500).send({ error: 'Error fetching random row' });
+      } else {
+          res.status(ResCode.Ok).send(results[0]);
+      }
+  });
 });
 
 app.get('*', (req: Request, res: Response) => {
