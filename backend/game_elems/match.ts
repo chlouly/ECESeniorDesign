@@ -1,6 +1,8 @@
-import { Player, Action } from './player';
+import { Player, Action, PlayerRow, player2row } from './player';
 import { matches, online } from '../app';
-import { ResCode } from '../error';
+import { ResCode, isResCode } from '../error';
+import { fetch_monster } from '../rds_actions';
+import { Monster } from './monster';
 
 const MAX_OCCUPANCY: number = 2;
 const WAIT_TIMEOUT: number = 5 * 60 * 1000; // Timeout for waiting 5 minutes (in ms)
@@ -56,6 +58,13 @@ class Match {
         } else if (this.next_to_move === 0) {
             this.next_to_move = player.get_id();
         } else { return false }
+
+        if (player.current_monster === null) {
+            const monster = fetch_monster(player.get_id(), player.monsters_roster[0]);
+            if (!isResCode(monster)) {
+                player.current_monster = monster;
+            }
+        }
 
         return true;
     }
@@ -136,6 +145,15 @@ class Match {
         })
     }
 
+    public get_data(): MatchData {
+        return {
+            gameNumber: this.match_number,
+            to_move: this.to_move,
+            next_to_move: this.next_to_move,
+            players: Object.values(this.players).map(player => player.get_data())
+        }
+    }
+
     public self_destruct() {
         // Change the status of any and all players
         Object.keys(this.players)
@@ -205,6 +223,13 @@ class MatchQueue {
 
         return match.match_number;
     }
+}
+
+interface MatchData {
+    gameNumber: number,
+    to_move: number,
+    next_to_move: number,
+    players: PlayerRow[],
 }
 
 export {

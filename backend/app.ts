@@ -5,10 +5,15 @@ import { logger } from "./logger";
 import { setup_rds_tables } from "./rds_config";
 import { Player, Difficulty, Action, validActions } from "./game_elems/player";
 import { MatchQueue, Match } from './game_elems/match';
+import { Monster } from './game_elems/monster';
 import path = require('path');
-import { ResCode } from './error';
+
 import mysql from 'mysql';
 import e = require('express');
+
+import { ResCode, isResCode } from './error';
+import { fetch_monster } from './rds_actions';
+
 
 dotenv.config();
 
@@ -152,6 +157,80 @@ app.get('/difficulty', (req: Request, res: Response) => {
 });
 
 
+///////////////////////////////////////////////////////////////////
+// This endpoint retrieves relevant data on a given player.
+//
+// body: {
+//    "id": PLAYER ID NUMBER,
+// }
+app.get('/playerdata', (req: Request, res: Response) => {
+  if (req.body === undefined) {
+    return res.status(ResCode.NoBody).end();
+  }
+
+  let code: ResCode = validate_match_ins(req.body.id, null, null, null);
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
+  }
+
+  // Pasring relevant data
+  const p_id: number = req.body.id;
+
+  // Getting Player object
+  const player: Player | undefined = online[p_id];
+
+  // Player is not online
+  if (player === undefined) {
+    return res.status(ResCode.NotFound).end();
+  }
+
+  return res.status(ResCode.Ok).json(player.get_data());
+});
+
+
+///////////////////////////////////////////////////////////////////
+// This endpoint retrieves relevant data on any monster that a given
+// player posesses.
+//
+// body: {
+//    "id": PLAYER ID NUMBER,
+//    "m_id": MONSTER ID NUMBER,
+// }
+app.get('/monsterdata', (req: Request, res: Response) => {
+  if (req.body === undefined) {
+    return res.status(ResCode.NoBody).end();
+  }
+
+  let code: ResCode = validate_match_ins(req.body.id, null, null, req.body.m_id);
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
+  }
+
+  // Pasring relevant data
+  const p_id: number = req.body.id;
+  const m_id: number = req.body.m_id;
+
+  // Getting Player object
+  const player: Player | undefined = online[p_id];
+
+  // Player is not online
+  if (player === undefined) {
+    return res.status(ResCode.NotFound).end();
+  }
+
+  // Getting Monster
+  const monster: Monster | ResCode = fetch_monster(p_id, m_id);
+
+  // Monster was not found
+  if (isResCode(monster)) {
+    return res.status(monster).end();
+  }
+
+  // Sends monster data
+  return res.status(ResCode.Ok).json(monster.get_data());
+});
+
+
 //////////////////////////////////////////////////////////
 // Lets a player join a random match
 //
@@ -241,7 +320,7 @@ app.post('/joingame', (req: Request, res: Response) => {
   // All other edge cases passed
   match.join(player)
 
-  return res.status(ResCode.Ok).send({'gameNumber' : gameNumber});
+  return res.status(ResCode.Ok).json(match.get_data());
 });
 
 
@@ -286,8 +365,11 @@ app.post('/action', (req: Request, res: Response) => {
     return res.status(ResCode.NotFound);
   }
 
-  // TODO: Will soon return game state
-  return res.status(match.take_turn(p_id, action, m_id)).end();
+  // Take turn and record if the turn was successful
+  code = match.take_turn(p_id, action, m_id);
+
+  // Return the code and the match data
+  return res.status(code).json(match.get_data());
 });
 
 
@@ -332,7 +414,7 @@ app.get('/waittomove', async (req: Request, res: Response) => {
   wait_code = await match.wait_to_move(id);
 
   // TODO: Will soon return game state 
-  return res.status(wait_code).end() ;
+  return res.status(wait_code).end(match.get_data()) ;
 });
 
 
