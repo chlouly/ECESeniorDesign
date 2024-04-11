@@ -46,3 +46,7 @@ export enum ResCode {
     /* --- SPECIAL --- */
     NotImplemented = 999,       // Special error code for functions that have n0ot yet been implemented
 }
+
+export function isResCode(value: any): value is ResCode {
+    return Object.values(ResCode).includes(value);
+}
