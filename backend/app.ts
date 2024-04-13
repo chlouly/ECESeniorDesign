@@ -10,6 +10,8 @@ import path = require('path');
 
 import mysql from 'mysql';
 import e = require('express');
+import multer, { MulterError } from 'multer';
+import fs from 'fs';
 
 import { ResCode, isResCode } from './error';
 import { fetch_monster } from './rds_actions';
@@ -33,6 +35,15 @@ connection.connect((err: mysql.MysqlError) => {
 });
 
 setup_rds_tables();
+
+// uploaf file using multer
+declare global {
+  namespace Express {
+    interface Request {
+      fileValidationError?: string;
+    }
+  }
+}
 
 /////////////////////////////////////////
 // Dictionaries and lists to manage state
@@ -59,13 +70,61 @@ let santi: Player = new Player("Santi", 3, [], [], [], null, 2, 0);
 online[santi.get_id()] = santi;
 
 
+//create storage using multer 
+export const storage_pdf = multer.diskStorage({
+  destination: (req, file, callback) => {
+    const uploadDir = path.join(__dirname, 'Uploaded_Files');
+    fs.mkdirSync(uploadDir, { recursive: true });
+    callback(null, uploadDir);
+  },
+  filename: (req, file, callback) => {
+    callback(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+  },
+});
+
+
+
+
+
 
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
+
+
 app.use(express.static(path.join(__dirname, '../front-end/build')));
 app.use(express.json());
 
+
+const upload = multer({ 
+  storage: storage_pdf,
+  fileFilter: (req, file, cb) => {
+    if (path.extname(file.originalname) !== '.pdf') {
+      req.fileValidationError = 'Only PDF files are allowed!';
+      cb(null, false); // Reject the file. Don't pass an Error here.
+      return;
+    }
+    cb(null, true);
+  },
+  limits: {
+    fileSize: 20 * 1024 * 1024 // 20 MB
+  }
+});
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (req.fileValidationError) {
+    return res.status(400).json({ message: req.fileValidationError });
+  }
+  
+  if (!req.file) {
+    return res.status(400).json({ message: 'Please upload a file.' });
+  }
+
+  return res.status(200).json({
+    message: 'File uploaded successfully',
+    filename: req.file.filename,
+  });
+});
 
 //////////////////////////////////////////////////////////
 // Lets a player save ther progress and logout
