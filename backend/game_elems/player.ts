@@ -126,7 +126,7 @@ class Player {
     }
 
 
-    public perform_action(opponent: Player, action: Action, m_id: number | null): ResCode {
+    public async perform_action(opponent: Player, action: Action, m_id: number | null): Promise<ResCode> {
         switch (action) {
             case (Action.Attack): {
                 return this.attack(opponent);
@@ -139,7 +139,7 @@ class Player {
                     return ResCode.SwapWoutMID;
                 }
 
-                return this.swap_primary(m_id);
+                return await this.swap_primary(m_id);
             }
             default: {
                 return ResCode.InvalidAction;
@@ -155,26 +155,21 @@ class Player {
     // Heals the primary monster
     private heal(): ResCode {
         if (this.current_monster === null) {
-            const monster: Monster | ResCode = fetch_monster(this.get_id(), this.monsters_roster[0])
-            if (isResCode(monster)) {
-                return monster;
-            }
-
-            this.current_monster = monster;
+            return ResCode.NotFound;
         }
-
         
+        this.current_monster.heal();
 
         return ResCode.Ok
     }
 
     // Swaps in the monster with the designated ID (from the roster only)
-    private swap_primary(m_id: number): ResCode {
+    private async swap_primary(m_id: number): Promise<ResCode> {
         if (!this.is_in_roster(m_id)) {
             return ResCode.NotFound;
         }
 
-        const monster: Monster | ResCode = fetch_monster(this.id, m_id);
+        const monster: Monster | ResCode = await fetch_monster(this.id, m_id);
 
         if (isResCode(monster)) {
             return monster;
