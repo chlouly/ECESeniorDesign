@@ -29,7 +29,7 @@ const UploadPage = () => {
                 formData.append('file', file);
                 formData.append('name', name);
 
-                fetch('http://localhost:5000/upload', { method: 'POST', body: formData })
+                fetch('/upload', { method: 'POST', body: formData })
                     .then((response) => response.json())
                     .then((data) => {
                         console.log('Response:', data);
