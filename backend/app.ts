@@ -196,7 +196,7 @@ app.get('/playerdata', (req: Request, res: Response) => {
 //    "id": PLAYER ID NUMBER,
 //    "m_id": MONSTER ID NUMBER,
 // }
-app.get('/monsterdata', (req: Request, res: Response) => {
+app.get('/monsterdata', async (req: Request, res: Response) => {
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
   }
@@ -219,7 +219,7 @@ app.get('/monsterdata', (req: Request, res: Response) => {
   }
 
   // Getting Monster
-  const monster: Monster | ResCode = fetch_monster(p_id, m_id);
+  const monster: Monster | ResCode = await fetch_monster(p_id, m_id);
 
   // Monster was not found
   if (isResCode(monster)) {
