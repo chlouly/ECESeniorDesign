@@ -549,16 +549,32 @@ app.get('/getstate', (req: Request, res: Response) => {
 
 // Returns a random paragraph from the database
 app.get('/randomparagraph', (req, res) => {
-  const query = 'SELECT * FROM mytable ORDER BY RAND() LIMIT 1';
+  // Select only the needed columns
+  const query = 'SELECT passage, question, choice_A, choice_B, choice_C, choice_D FROM mytable ORDER BY RAND() LIMIT 1';
 
-  connection.query(query, (error: any, results: any) => {
+  connection.query(query, (error, results) => {
       if (error) {
           res.status(500).send({ error: 'Error fetching random row' });
+      } else if (results.length > 0) {
+          const row = results[0];
+          res.status(200).send({
+              paragraph: row.passage,
+              question: {
+                text: row.question,
+                options: [
+                  row.choice_A,
+                  row.choice_B,
+                  row.choice_C,
+                  row.choice_D
+                ]
+              }
+          });
       } else {
-          res.status(ResCode.Ok).send(results[0]);
+          res.status(404).send({ error: 'No data found' });
       }
   });
 });
+
 
 app.get('*', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../../front-end/build/index.html'));
