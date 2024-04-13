@@ -3,11 +3,12 @@
 //  definitions for users
 //
 
-import { ResCode } from '../error';
+import { ResCode, isResCode } from '../error';
 import { Egg } from './egg';
-import { Monster } from './monster';
+import { Monster, MonsterRow } from './monster';
+import { fetch_monster } from '../rds_actions';
 
-const NUM_MONSTERS_ROSTER: number = 6;
+const NUM_MONSTERS_ROSTER: number = 5;
 const NUM_MONSTERS_BENCH: number = 120;
 const NUM_EGGS = 20;
 
@@ -29,7 +30,7 @@ const validActions = new Set(Object.values(Action));
 class Player {
     private name: string;   // Username
     private id: number;     // Actual user ID
-    public monsters_roster: number[] = [];     // Monster ids to be used in fights
+    public monsters_roster: number[] = [];     // Monsters to be used in fights
     public monsters_bench: number[] = [];      // Monster ids stored away for later
     public eggs: number[] = [];                // Egg ids that the user has
     private level: number = 1;
@@ -93,6 +94,12 @@ class Player {
     // Checks if the bench is full
     private bench_full(): boolean { return this.monsters_bench.length >= NUM_MONSTERS_BENCH }
 
+    // Checks if a particular monster id is in the player's roster
+    private is_in_roster(id: number): boolean { return this.monsters_roster.some(m_id => m_id === id) }
+
+    // Checks if a particular monster id is in the player's bench
+    private is_in_bench(id: number): boolean { return this.monsters_bench.some(m_id => m_id === id) }
+
 
 
 
@@ -142,17 +149,49 @@ class Player {
 
     // TODO
     private attack(player: Player): ResCode {
-        return ResCode.NotImplemented
+        return ResCode.NotImplemented;
     }
 
-    // TODO
+    // Heals the primary monster
     private heal(): ResCode {
-        return ResCode.NotImplemented;
+        if (this.current_monster === null) {
+            const monster: Monster | ResCode = fetch_monster(this.get_id(), this.monsters_roster[0])
+            if (isResCode(monster)) {
+                return monster;
+            }
+
+            this.current_monster = monster;
+        }
+
+        
+
+        return ResCode.Ok
     }
 
-    // TODO
-    private swap_primary(monster_id: number): ResCode {
-        return ResCode.NotImplemented;
+    // Swaps in the monster with the designated ID (from the roster only)
+    private swap_primary(m_id: number): ResCode {
+        if (!this.is_in_roster(m_id)) {
+            return ResCode.NotFound;
+        }
+
+        const monster: Monster | ResCode = fetch_monster(this.id, m_id);
+
+        if (isResCode(monster)) {
+            return monster;
+        }
+
+        // Remove this id from the list
+        this.monsters_roster = this.monsters_roster.filter(id => { return id !== m_id; });
+
+        // Add the old monster to the list and save its info (if it was there to begin with)
+        if (this.current_monster !== null) {
+            this.add2roster(this.current_monster.id);
+            this.current_monster.save2db();
+        }
+
+        this.current_monster = monster;
+
+        return ResCode.Ok
     }
 
 
@@ -279,6 +318,16 @@ class Player {
         return false;
     }
 
+
+    public get_data(): PlayerRow {
+        let data: PlayerRow = player2row(this);
+        if (this.current_monster !== null) {
+            data.current_monster = this.current_monster.get_data();
+        }
+
+        return data;
+    }
+
     // Saves all user data to the database
     // Returns true upon success, returns false on failure
     public save2db(): boolean {
@@ -299,6 +348,7 @@ interface PlayerRow {
     monsters_bench: number[];
     eggs: number[];
     currently_hatching_egg: number | null;
+    current_monster: MonsterRow | number | null;   //
     level: number;
     xp: number;
 }
@@ -324,6 +374,7 @@ function player2row(player: Player): PlayerRow {
         monsters_bench: player.monsters_bench,
         eggs: player.eggs,
         currently_hatching_egg: player.currently_hatching_egg,
+        current_monster: (player.current_monster === null)? null : player.current_monster.id,   // Get id
         level: player.get_level(),
         xp: player.get_xp()  
     }
