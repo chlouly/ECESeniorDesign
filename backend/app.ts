@@ -19,20 +19,21 @@ import { fetch_monster } from './rds_actions';
 
 dotenv.config();
 
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
+  connectionLimit: 10,
   host: 'localhost',
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
   database: 'mydatabase'
 });
 
-connection.connect((err: mysql.MysqlError) => {
-  if (err) {
-    logger.error('Error connecting to MySQL:', err);
-  } else {
-    logger.info('Connected to MySQL');
-  }
-});
+// connection.connect((err: mysql.MysqlError) => {
+//   if (err) {
+//     logger.error('Error connecting to MySQL:', err);
+//   } else {
+//     logger.info('Connected to MySQL');
+//   }
+// });
 
 setup_rds_tables();
 
@@ -549,12 +550,12 @@ app.get('/getstate', (req: Request, res: Response) => {
 
 // Returns a random paragraph from the database
 app.get('/randomparagraph', (req, res) => {
-  // Select only the needed columns
   const query = 'SELECT passage, question, choice_A, choice_B, choice_C, choice_D FROM mytable ORDER BY RAND() LIMIT 1';
 
-  connection.query(query, (error, results) => {
+  pool.query(query, (error, results) => {
       if (error) {
-          res.status(500).send({ error: 'Error fetching random row' });
+          console.error('Error fetching random row:', error);
+          res.status(500).send({ error: 'Error fetching random row', details: error });
       } else if (results.length > 0) {
           const row = results[0];
           res.status(200).send({
@@ -562,10 +563,10 @@ app.get('/randomparagraph', (req, res) => {
               question: {
                 text: row.question,
                 options: [
-                  row.choice_A,
-                  row.choice_B,
-                  row.choice_C,
-                  row.choice_D
+                  "A) " + row.choice_A,
+                  "B) " + row.choice_B,
+                  "C) " + row.choice_C,
+                  "D) " + row.choice_D
                 ]
               }
           });
