@@ -1,8 +1,24 @@
 #!/bin/bash
 
-pm2 kill;
+pm2 kill
 
-npm run clean;
-npm run build;
+npm run clean
+npm run build
 
-pm2 start app.js;
+pm2 start app.js
+
+
+MYSQL_STATUS=$(sudo systemctl is-active mysqld)
+
+if [ "$MYSQL_STATUS" != "active" ]; then
+    echo "MySQL is not running. Attempting to start MySQL..."
+    sudo systemctl start mysqld
+
+    if sudo systemctl is-active mysqld; then
+        echo "MySQL started successfully."
+    else
+        echo "Failed to start MySQL. Please check the system logs."
+    fi
+else
+    echo "MySQL is running."
+fi
