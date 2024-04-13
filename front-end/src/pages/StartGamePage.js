@@ -1,17 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiPlay } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const StartGamePage = () => {
-  const [gameNumber, setGameNumber] = useState('12345'); // Santi generate it dinamitacally with the backend API
-  const [hasJoined, setHasJoined] = useState(false); // Santi get this value from the backend API
+  const [gameNumber, setGameNumber] = useState(''); // Initialize gameNumber as an empty string
+  const [hasJoined, setHasJoined] = useState(false);
   const navigate = useNavigate();
   const handleStartGame = () => {
-    // Make a request to the server to start the game
-    // navigate(`/game/${gameNumber}`); for example
     console.log('Game started');
-    navigate('/game');
+    const user_ID = 1; // Assuming you have a logic to set this dynamically
+  
+    // Sending the request to the backend
+    fetch('/joingame', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: user_ID, gameNumber: '' }) // Sending an empty string to create a new game
+    })
+      .then(response => {
+        if (response.status === 200) {
+          return response.json(); // Parsing the JSON response body
+        } else {
+          console.error('Not response 200');
+          throw new Error('Failed to join game');
+        }
+      })
+      .then(data => {
+        // Data should have the format { gameNumber: YOUR_GAME_NUMBER }
+        setGameNumber(data.gameNumber); // Updating state with the new game number
+        navigate(`/game/${data.gameNumber}`); // Navigating using the updated game number
+      })
+      .catch(error => {
+        alert(error);
+        console.error(error);
+      });
   };
+  
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-blue-100 p-4">
@@ -23,13 +48,12 @@ const StartGamePage = () => {
         <p className="text-lg mb-4">
           {hasJoined ? 'Somebody has joined the game.' : 'Nobody has joined the game.'}
         </p>
-        
+
         {/* Start Button */}
-        <button 
+        <button
           className="flex items-center justify-center px-6 py-3 text-white bg-green-600 rounded-md shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
           onClick={handleStartGame}
-          // disabled={!hasJoined} // Santi enable this button dinamically with the backend API
-
+          // disabled={!hasJoined} // Santi enable this button dynamically with the backend API
         >
           <FiPlay className="mr-2" />
           Start Game

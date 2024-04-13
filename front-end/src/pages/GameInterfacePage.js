@@ -2,19 +2,45 @@ import React, { useEffect, useState } from "react";
 import monster1 from "../images/monster_1.webp";
 import monster2 from "../images/monster_2.webp";
 import battle_arena from "../images/battle_arena.jpg";
+import { useNavigate } from "react-router-dom";
 
 function GameInterface() {
   const [paragraph, setParagraph] = useState("");
   const [question, setQuestion] = useState({});
   const [monster1Data, setMonster1Data] = useState({});
   const [monster2Data, setMonster2Data] = useState({});
-
+  const [gameNumber, setGameNumber] = useState(""); 
+  const navigate = useNavigate();
   const [actions, setActions] = useState([
     { name: "Attack", points: 5 },
     { name: "Heal", points: 10 },
   ]);
 
   const [pointsAvailable, setPointsAvailable] = useState(20);
+
+  const handleLeaveGame = () => {
+    fetch("/leavegame", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: 1,
+        gameNumber: gameNumber,
+      }),
+    }).then((response) => {
+      if (response.status === 200) {
+        navigate("/");
+      } else {
+        console.error("Not response 200");
+        throw new Error("Failed to leave game");
+      }
+    }).catch((error) => {
+      alert(error);
+      console.error(error);
+    });
+  };
+
 
   const fetchInitialGameData = async () => {
     // Replace with actual API call
@@ -33,6 +59,7 @@ function GameInterface() {
         health: 100,
       },
     };
+
     setParagraph(gameData.paragraph);
     setQuestion(gameData.question);
     setMonster1Data(gameData.monster1);
@@ -40,14 +67,69 @@ function GameInterface() {
   };
 
   const handleActionClick = (action) => {
-    // Replace with actual API call
-    // Post, Attack, Heal
-    // Gamenumber
-    // PlayerNumber
+    fetch("/action", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: 1,
+        gameNumber: gameNumber,
+        action: action,
+        m_id: 1,
+      }),
+    }).then((response) => {
+      if (response.status === 200) {
+        return response.json();
+      } else {
+        console.error("Not response 200");
+        throw new Error("Failed to perform action");
+      }
+    }).then((data) => {
+      // Data should have the format { gameData: YOUR_GAME_DATA }
+      setMonster1Data(data.monster1);
+      setMonster2Data(data.monster2);
+      setPointsAvailable(data.pointsAvailable);
+    }).catch((error) => {
+      alert(error);
+      console.error(error);
+    });
+
+    // Make a new API call to wait for the other player. Time out after 15 seconds.
+    setTimeout(() => {
+      handleWaitForOtherPlayer();
+    }, 15000);
 
     // I will also get game data back from the server
   };
   const handleWaitForOtherPlayer = () => {
+
+    fetch('/waittomove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 1, gameNumber: gameNumber })
+    })
+      .then(response => {
+        if (response.status === 200) {
+          return response.json();
+        } else {
+          console.error('Not response 200');
+          throw new Error('Failed to wait for other player');
+        }
+      })
+      .then(data => {
+        // Data should have the format { gameData: YOUR_GAME_DATA }
+        setMonster1Data(data.monster1);
+        setMonster2Data(data.monster2);
+        setPointsAvailable(data.pointsAvailable);
+      })
+      .catch(error => {
+        alert(error);
+        console.error(error);
+      });
+      
     // Replace with actual API call
     // Post, WaitForOtherPlayer
     // Gamenumber
@@ -56,10 +138,15 @@ function GameInterface() {
     // I will also get game data back from the server
   };
 
-
   useEffect(() => {
-    fetchInitialGameData(); 
+    let gameNumber = window.location.pathname.split("/").pop();
+    console.log(gameNumber);
+
+    setGameNumber(gameNumber);
+    fetchInitialGameData();
+
   }, []);
+
 
   return (
     <div
@@ -75,9 +162,10 @@ function GameInterface() {
         <div className="text-blue-700 flex flex-col mt-2 space-y-2">
           {question.options?.map((option, index) => (
             <button
-            key={index}
-            className="px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white">
-                {option}
+              key={index}
+              className="px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white"
+            >
+              {option}
             </button>
           ))}
         </div>
@@ -101,7 +189,7 @@ function GameInterface() {
 
       {/* MENU */}
 
-      <div className="col-span-2 bg-blue-100 rounded-lg shadow p-4 mt-4">
+      <div className="col-span-2 bg-blue-100 rounded-lg shadow p-4 mt-4 relative">
         <p className="text-blue-800 font-semibold mb-2">Choose an action:</p>
         <div className=" items-center space-x-4">
           {actions.map((action, index) => (
@@ -113,7 +201,7 @@ function GameInterface() {
                   : "bg-gray-500"
               } text-white`}
               onClick={() => {
-                /* handle action click */
+                handleActionClick(action);
               }}
               disabled={pointsAvailable < action.points}
             >
@@ -124,6 +212,15 @@ function GameInterface() {
         <p className="text-blue-800 font-semibold mt-4">
           Points Available: {pointsAvailable}
         </p>
+        <div className="absolute bottom-0 right-0 bg-white p-4 rounded-lg shadow space-y-4">
+          <p className="text-gray-800 font-semibold">Game Number: {gameNumber}</p>
+          <button
+            className="px-4 py-2 rounded-lg shadow bg-red-500 hover:bg-red-600 text-white"
+            onClick={handleLeaveGame}
+          >
+            Leave Game
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col col-span-1 row-span-2 items-center">
