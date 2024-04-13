@@ -15,6 +15,13 @@ function GameInterface() {
     { name: "Attack", points: 5 },
     { name: "Heal", points: 10 },
   ]);
+  const [paragraphData, setParagraphData] = useState({
+    paragraph: "",
+    question: {
+      text: "",
+      options: [],
+    }
+  });
 
   const [pointsAvailable, setPointsAvailable] = useState(20);
 
@@ -40,16 +47,31 @@ function GameInterface() {
       console.error(error);
     });
   };
-
+  const getNewParagraph = () => {
+    fetch('/randomparagraph')
+      .then(response => response.json())
+      .then(data => {
+        if(data.error) {
+          console.error('Failed to fetch data:', data.error);
+        } else {
+          setParagraphData({
+            paragraph: data.paragraph,
+            question: {
+              text: data.question.text,
+              options: data.question.options,
+            }
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+      });
+  };
 
   const fetchInitialGameData = async () => {
+    getNewParagraph();
     // Replace with actual API call
     const gameData = {
-      paragraph: "This is a sample paragraph from the mock API.",
-      question: {
-        text: "Sample Question: Which of the following is true?",
-        options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
-      },
       monster1: {
         name: "Monster 1",
         health: 100,
@@ -59,9 +81,6 @@ function GameInterface() {
         health: 100,
       },
     };
-
-    setParagraph(gameData.paragraph);
-    setQuestion(gameData.question);
     setMonster1Data(gameData.monster1);
     setMonster2Data(gameData.monster2);
   };
@@ -90,6 +109,7 @@ function GameInterface() {
       setMonster1Data(data.monster1);
       setMonster2Data(data.monster2);
       setPointsAvailable(data.pointsAvailable);
+      getNewParagraph();
     }).catch((error) => {
       alert(error);
       console.error(error);
@@ -154,13 +174,13 @@ function GameInterface() {
       style={{ backgroundImage: `url(${battle_arena}), height: 100vh` }}
     >
       <div className="row-span-2 bg-blue-100 rounded-lg shadow p-4">
-        <p className="text-blue-800 font-semibold">{paragraph}</p>
+        <p className="text-blue-800 font-semibold">{paragraphData.paragraph}</p>
       </div>
 
       <div className="bg-blue-100 rounded-lg shadow p-4 mt-4">
-        <p className="text-blue-800 font-semibold">{question.text}</p>
+        <p className="text-blue-800 font-semibold">{paragraphData.question.text}</p>
         <div className="text-blue-700 flex flex-col mt-2 space-y-2">
-          {question.options?.map((option, index) => (
+          {paragraphData.question.options?.map((option, index) => (
             <button
               key={index}
               className="px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white"
