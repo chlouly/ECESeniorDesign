@@ -9,7 +9,7 @@ function GameInterface() {
   const [question, setQuestion] = useState({});
   const [monster1Data, setMonster1Data] = useState({});
   const [monster2Data, setMonster2Data] = useState({});
-  const [gameNumber, setGameNumber] = useState(""); 
+  const [gameNumber, setGameNumber] = useState("");
   const navigate = useNavigate();
   const [actions, setActions] = useState([
     { name: "Attack", points: 5 },
@@ -20,7 +20,7 @@ function GameInterface() {
     question: {
       text: "",
       options: [],
-    }
+    },
   });
 
   const [pointsAvailable, setPointsAvailable] = useState(20);
@@ -35,36 +35,38 @@ function GameInterface() {
         id: 1,
         gameNumber: gameNumber,
       }),
-    }).then((response) => {
-      if (response.status === 200) {
-        navigate("/");
-      } else {
-        console.error("Not response 200");
-        throw new Error("Failed to leave game");
-      }
-    }).catch((error) => {
-      alert(error);
-      console.error(error);
-    });
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          navigate("/");
+        } else {
+          console.error("Not response 200");
+          throw new Error("Failed to leave game");
+        }
+      })
+      .catch((error) => {
+        alert(error);
+        console.error(error);
+      });
   };
   const getNewParagraph = () => {
-    fetch('/randomparagraph')
-      .then(response => response.json())
-      .then(data => {
-        if(data.error) {
-          console.error('Failed to fetch data:', data.error);
+    fetch("/randomparagraph")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          console.error("Failed to fetch data:", data.error);
         } else {
           setParagraphData({
             paragraph: data.paragraph,
             question: {
               text: data.question.text,
               options: data.question.options,
-            }
+            },
           });
         }
       })
-      .catch(error => {
-        console.error('Error fetching data:', error);
+      .catch((error) => {
+        console.error("Error fetching data:", error);
       });
   };
 
@@ -97,23 +99,26 @@ function GameInterface() {
         action: action,
         m_id: 1,
       }),
-    }).then((response) => {
-      if (response.status === 200) {
-        return response.json();
-      } else {
-        console.error("Not response 200");
-        throw new Error("Failed to perform action");
-      }
-    }).then((data) => {
-      // Data should have the format { gameData: YOUR_GAME_DATA }
-      setMonster1Data(data.monster1);
-      setMonster2Data(data.monster2);
-      setPointsAvailable(data.pointsAvailable);
-      getNewParagraph();
-    }).catch((error) => {
-      alert(error);
-      console.error(error);
-    });
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          return response.json();
+        } else {
+          console.error("Not response 200");
+          throw new Error("Failed to perform action");
+        }
+      })
+      .then((data) => {
+        // Data should have the format { gameData: YOUR_GAME_DATA }
+        setMonster1Data(data.monster1);
+        setMonster2Data(data.monster2);
+        setPointsAvailable(data.pointsAvailable);
+        getNewParagraph();
+      })
+      .catch((error) => {
+        alert(error);
+        console.error(error);
+      });
 
     // Make a new API call to wait for the other player. Time out after 15 seconds.
     setTimeout(() => {
@@ -123,33 +128,32 @@ function GameInterface() {
     // I will also get game data back from the server
   };
   const handleWaitForOtherPlayer = () => {
-
-    fetch('/waittomove', {
-      method: 'POST',
+    fetch("/waittomove", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id: 1, gameNumber: gameNumber })
+      body: JSON.stringify({ id: 1, gameNumber: gameNumber }),
     })
-      .then(response => {
+      .then((response) => {
         if (response.status === 200) {
           return response.json();
         } else {
-          console.error('Not response 200');
-          throw new Error('Failed to wait for other player');
+          console.error("Not response 200");
+          throw new Error("Failed to wait for other player");
         }
       })
-      .then(data => {
+      .then((data) => {
         // Data should have the format { gameData: YOUR_GAME_DATA }
         setMonster1Data(data.monster1);
         setMonster2Data(data.monster2);
         setPointsAvailable(data.pointsAvailable);
       })
-      .catch(error => {
+      .catch((error) => {
         alert(error);
         console.error(error);
       });
-      
+
     // Replace with actual API call
     // Post, WaitForOtherPlayer
     // Gamenumber
@@ -165,8 +169,42 @@ function GameInterface() {
     setGameNumber(gameNumber);
     fetchInitialGameData();
 
-  }, []);
+    const handleBeforeUnload = (event) => {
+      // Perform actions before the component unloads
+      // Make a call to the backend to leave the game
+      fetch("/leavegame", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: 1,
+          gameNumber: gameNumber,
+        }),
+      })
+        .then((response) => {
+          if (response.status === 200) {
+            console.log("Left game successfully");
+            alert("You left the game");
+            navigate("/");
+          } else {
+            console.error("Not response 200");
+            throw new Error("Failed to leave game");
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
 
+
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   return (
     <div
@@ -178,7 +216,9 @@ function GameInterface() {
       </div>
 
       <div className="bg-blue-100 rounded-lg shadow p-4 mt-4">
-        <p className="text-blue-800 font-semibold">{paragraphData.question.text}</p>
+        <p className="text-blue-800 font-semibold">
+          {paragraphData.question.text}
+        </p>
         <div className="text-blue-700 flex flex-col mt-2 space-y-2">
           {paragraphData.question.options?.map((option, index) => (
             <button
@@ -233,7 +273,9 @@ function GameInterface() {
           Points Available: {pointsAvailable}
         </p>
         <div className="absolute bottom-0 right-0 bg-white p-4 rounded-lg shadow space-y-4">
-          <p className="text-gray-800 font-semibold">Game Number: {gameNumber}</p>
+          <p className="text-gray-800 font-semibold">
+            Game Number: {gameNumber}
+          </p>
           <button
             className="px-4 py-2 rounded-lg shadow bg-red-500 hover:bg-red-600 text-white"
             onClick={handleLeaveGame}
