@@ -35,7 +35,7 @@ const AppRouter = () => {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<HomeMenu />} />
+                <Route path="/" element={<PrivateRoute><HomeMenu /></PrivateRoute>} />
                 <Route path="/game" element={<GameInterface />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/join" element={<JoinGamePage />} />
