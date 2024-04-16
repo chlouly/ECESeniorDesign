@@ -36,6 +36,8 @@ const CallbackPage = () => {
             console.error('Error exchanging code for tokens:', error);
             // navigate('/login'); // Redirect to login on failure
             alert("Error exchanging code for tokens");
+       
+            window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/login`;
             
         }
     };
