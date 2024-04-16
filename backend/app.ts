@@ -93,7 +93,7 @@ const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
 // use environment for path
 
-app.use(express.static(process.env.PUBLIC_PATH || path.join(__dirname, '../../front-end/build')));
+app.use(express.static(process.env.PUBLIC_PATH || "/home/ec2-user/OSS/front-end/build"));
 app.use(express.json());
 
 
@@ -606,7 +606,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.get('*', (req: Request, res: Response) => {
   if (process.env.PUBLIC_PATH === undefined) {
-    res.sendFile(path.join(__dirname, '../../front-end/build/index.html'));
+    res.sendFile("/home/ec2-user/OSS/front-end/build/index.html");
   } else {
     res.sendFile(process.env.PUBLIC_PATH + '/index.html');
   }
