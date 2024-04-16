@@ -6,7 +6,7 @@ import Settings from './pages/SettingsPage';
 import JoinGamePage from './pages/JoinGamePage';
 import StartGamePage from './pages/StartGamePage';
 import PdfUploadPage from './pages/PdfUploadPage'; 
-import { Navigate } from 'react-router-dom';
+
 import CallbackPage from './pages/CallBackPage';
 
 const isAuthenticated = () => {
