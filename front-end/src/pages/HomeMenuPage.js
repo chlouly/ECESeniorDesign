@@ -2,6 +2,15 @@ import React from "react";
 import { FiPlayCircle, FiUsers, FiSettings } from "react-icons/fi";
 import { Link } from "react-router-dom";
 const HomeMenu = () => {
+  const handleLogout = () => {
+    // Clear local authentication state
+    localStorage.removeItem('id_token');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('isAuthenticated');
+    // Redirect to Cognito logout URL
+    window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/login`;
+};
+
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-blue-100">
       <div className="text-4xl font-bold text-blue-800 mb-10">
@@ -42,6 +51,13 @@ const HomeMenu = () => {
         <FiUsers className="mr-2" />
         Upload PDF
       </Link>
+      <button
+        onClick={handleLogout}
+        className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-red-500 rounded-md shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+      >
+        Logout
+      </button>
+      
     </div>
   );
 };
