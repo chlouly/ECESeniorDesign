@@ -9,8 +9,8 @@ function GameInterface() {
   const [gameNumber, setGameNumber] = useState(window.location.pathname.split("/").pop());
   const navigate = useNavigate();
   const [actions, setActions] = useState([
-    { name: "Attack", points: 5 },
-    { name: "Heal", points: 10 },
+    { name: "Attack"},
+    { name: "Heal"},
   ]);
   const [paragraphData, setParagraphData] = useState({
     paragraph: "",
@@ -19,8 +19,6 @@ function GameInterface() {
       options: [],
     },
   });
-
-  const [pointsAvailable, setPointsAvailable] = useState(20);
 
   const handleLeaveGame = () => {
     fetch("/leavegame", {
@@ -86,6 +84,8 @@ function GameInterface() {
       .then((data) => {
         // Data should have the format { gameData: YOUR_GAME_DATA }
         setGameData(data);
+        console.log("Initial game data fetched successfully");
+        console.log(data);
         getNewParagraph();
       })
       .catch((error) => {
@@ -117,9 +117,8 @@ function GameInterface() {
       })
       .then((data) => {
         // Data should have the format { gameData: YOUR_GAME_DATA }
-        setMonster1Data(data.monster1);
-        setMonster2Data(data.monster2);
-        setPointsAvailable(data.pointsAvailable);
+        console.log("Action performed successfully");
+        console.log(data);
         getNewParagraph();
       })
       .catch((error) => {
@@ -152,9 +151,8 @@ function GameInterface() {
       })
       .then((data) => {
         // Data should have the format { gameData: YOUR_GAME_DATA }
-        setMonster1Data(data.monster1);
-        setMonster2Data(data.monster2);
-        setPointsAvailable(data.pointsAvailable);
+        console.log("Other player has moved");
+        console.log(data);
       })
       .catch((error) => {
         alert(error);
@@ -258,23 +256,15 @@ function GameInterface() {
           {actions.map((action, index) => (
             <button
               key={index}
-              className={`px-4 py-2 rounded-lg shadow ${
-                pointsAvailable >= action.points
-                  ? "bg-green-500 hover:bg-green-600"
-                  : "bg-gray-500"
-              } text-white`}
+              className={`px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600" text-white`}
               onClick={() => {
                 handleActionClick(action);
               }}
-              disabled={pointsAvailable < action.points}
             >
-              {action.name} (-{action.points} pts)
+              {action.name}
             </button>
           ))}
         </div>
-        <p className="text-blue-800 font-semibold mt-4">
-          Points Available: {pointsAvailable}
-        </p>
         <div className="absolute bottom-0 right-0 bg-white p-4 rounded-lg shadow space-y-4">
           <p className="text-gray-800 font-semibold">
             Game Number: {gameNumber}
