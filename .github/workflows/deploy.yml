@@ -17,7 +17,7 @@ jobs:
         with:
           SSH_PRIVATE_KEY: ${{ secrets.Senior_Design_deploy_key }}
           SOURCE: "./"
-          REMOTE_HOST: "ec2-54-234-11-175.compute-1.amazonaws.com"
+          REMOTE_HOST: "ec2-107-20-33-135.compute-1.amazonaws.com"
           REMOTE_USER: "ec2-user"
           TARGET: "/home/ec2-user/OSS"
 
