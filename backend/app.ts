@@ -91,9 +91,9 @@ export const storage_pdf = multer.diskStorage({
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
+// use environment for path
 
-
-app.use(express.static(path.join(__dirname, '../front-end/build')));
+app.use(express.static(process.env.PUBLIC_PATH || path.join(__dirname, '../../front-end/build')));
 app.use(express.json());
 
 
@@ -290,6 +290,24 @@ app.get('/monsterdata', (req: Request, res: Response) => {
   return res.status(ResCode.Ok).json(monster.get_data());
 });
 
+app.get('/create_account', (req: Request, res: Response) => {
+  // cognito
+
+  // Player instance
+
+  //  to create one.
+
+});
+
+app.get('/login', (req: Request, res: Response) => {
+  // cognito
+
+  // Player instance
+
+  //  check if player is already online
+
+});
+
 
 //////////////////////////////////////////////////////////
 // Lets a player join a random match
@@ -332,18 +350,22 @@ app.post('/joinrandom', (req: Request, res: Response) => {
 // attempts to join, if not then it attempts to create it.
 app.post('/joingame', (req: Request, res: Response) => {
   // Validating request body
+  console.log(req.body);
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
   }
   
   let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber, null, null);
+  console.log(code);
   if (code !== ResCode.Ok) {
+    console.log("ERROR");
     return res.status(code).end();
   }
 
   // Parsing player request data
   const id: number = req.body.id;
   const player: Player | undefined = online[id];
+  console.log(player);
 
   // Player is not online
   if (player === undefined) {
@@ -576,9 +598,18 @@ app.get('/randomparagraph', (req, res) => {
   });
 });
 
+// logg all requests
+app.use((req: Request, res: Response, next: NextFunction) => {
+  logger.info(`${req.method} ${req.path}`);
+  next();
+});
 
 app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../../front-end/build/index.html'));
+  if (process.env.PUBLIC_PATH === undefined) {
+    res.sendFile(path.join(__dirname, '../../front-end/build/index.html'));
+  } else {
+    res.sendFile(process.env.PUBLIC_PATH + '/index.html');
+  }
 });
 
 app.listen(port, () => {

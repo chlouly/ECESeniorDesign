@@ -28,6 +28,7 @@ const StartGamePage = () => {
       })
       .then(data => {
         // Data should have the format { gameNumber: YOUR_GAME_NUMBER }
+        console.log(data);
         setGameNumber(data.gameNumber); // Updating state with the new game number
         navigate(`/game/${data.gameNumber}`); // Navigating using the updated game number
       })

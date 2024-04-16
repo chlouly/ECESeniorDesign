@@ -5,11 +5,8 @@ import battle_arena from "../images/battle_arena.jpg";
 import { useNavigate } from "react-router-dom";
 
 function GameInterface() {
-  const [paragraph, setParagraph] = useState("");
-  const [question, setQuestion] = useState({});
-  const [monster1Data, setMonster1Data] = useState({});
-  const [monster2Data, setMonster2Data] = useState({});
-  const [gameNumber, setGameNumber] = useState("");
+  const [gameData, setGameData] = useState({});
+  const [gameNumber, setGameNumber] = useState(window.location.pathname.split("/").pop());
   const navigate = useNavigate();
   const [actions, setActions] = useState([
     { name: "Attack", points: 5 },
@@ -71,20 +68,30 @@ function GameInterface() {
   };
 
   const fetchInitialGameData = async () => {
-    getNewParagraph();
-    // Replace with actual API call
-    const gameData = {
-      monster1: {
-        name: "Monster 1",
-        health: 100,
+    fetch("/initialgame", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      monster2: {
-        name: "Monster 2",
-        health: 100,
-      },
-    };
-    setMonster1Data(gameData.monster1);
-    setMonster2Data(gameData.monster2);
+      body: JSON.stringify({ id: 1, gameNumber: gameNumber }),
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          return response.json();
+        } else {
+          console.error("Not response 200");
+          throw new Error("Failed to fetch initial game data");
+        }
+      })
+      .then((data) => {
+        // Data should have the format { gameData: YOUR_GAME_DATA }
+        setGameData(data);
+        getNewParagraph();
+      })
+      .catch((error) => {
+        alert(error);
+        console.error(error);
+      });
   };
 
   const handleActionClick = (action) => {
@@ -163,10 +170,6 @@ function GameInterface() {
   };
 
   useEffect(() => {
-    let gameNumber = window.location.pathname.split("/").pop();
-    console.log(gameNumber);
-
-    setGameNumber(gameNumber);
     fetchInitialGameData();
 
     const handleBeforeUnload = (event) => {
@@ -241,9 +244,9 @@ function GameInterface() {
         />
         <div className="bg-blue-100 rounded-lg shadow p-2 text-center mt-2">
           <p className="text-blue-800 font-semibold">
-            HEALTH: {monster1Data.health}
+            HEALTH: 100
           </p>
-          <p className="text-blue-700">{monster1Data.name}</p>
+          <p className="text-blue-700">gameData[0].name</p>
         </div>
       </div>
 
@@ -293,9 +296,9 @@ function GameInterface() {
         />
         <div className="bg-blue-100 rounded-lg shadow p-2 text-center mt-2">
           <p className="text-blue-800 font-semibold">
-            HEALTH: {monster2Data.health}
+            HEALTH: 100
           </p>
-          <p className="text-blue-700">{monster2Data.name}</p>
+          <p className="text-blue-700">{gameData[1].name}</p>
         </div>
       </div>
     </div>

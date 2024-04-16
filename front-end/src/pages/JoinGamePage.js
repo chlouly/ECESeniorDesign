@@ -5,10 +5,32 @@ const JoinGamePage = () => {
   const [gameNumber, setGameNumber] = useState("");
   const navigate = useNavigate();
   const handleJoinGame = () => {
+    const gameNumberInt = parseInt(gameNumber, 10);
+    console.log(gameNumberInt);
     // Make a request to the server to join the game
-    navigate(`/game/${gameNumber}`);
-    // navigate(`/game`);
-    console.log(`Joining game: ${gameNumber}`);
+    fetch("/joingame", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: 2, gameNumber: gameNumberInt }),
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          return response.json();
+        } else {
+          console.error("Not response 200");
+          throw new Error("Failed to join game");
+        }
+      })
+      .then((data) => {
+        console.log(data);
+        navigate(`/game/${gameNumber}`);
+      })
+      .catch((error) => {
+        alert(error);
+        console.error(error);
+      });
   };
 
   return (
