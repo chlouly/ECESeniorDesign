@@ -17,7 +17,8 @@ const CallbackPage = () => {
         try {
             const response = await axios.post('https://pokidips.auth.us-east-1.amazoncognito.com/oauth2/token', new URLSearchParams({
                 grant_type: 'authorization_code',
-                client_id: '6ke1tj0bnmg6ij6t6354lfs30q',
+                client_id: "6ke1tj0bnmg6ij6t6354lfs30q",
+                client_secret: '1mvpj1rgggg4u3oho03r0h4rd3us2i80e8uaga21oal28lpcq89k',
                 code: code,
                 redirect_uri: 'https://pokidips.games/callback'
             }), {
@@ -37,7 +38,12 @@ const CallbackPage = () => {
             // navigate('/login'); // Redirect to login on failure
             alert("Error exchanging code for tokens");
        
-            window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/login`;
+            // log the user out
+            localStorage.removeItem('id_token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('isAuthenticated');
+            // Redirect to Cognito logout URL
+            window.location.href = "https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q";
             
         }
     };
