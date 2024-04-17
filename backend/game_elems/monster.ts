@@ -4,6 +4,10 @@
 //
 
 const MAX_LEVEL = 100;
+const MAX_HEALTH = 100;
+
+// Returns a 
+function img_string(id: number, evolution: number): string { return `m${id}_${evolution}.`; }
 
 enum MonsterType {
     Common,
@@ -14,13 +18,15 @@ enum MonsterType {
 }
 
 class Monster {
+    // Monster Data
     name: string;
     id: number;
     level: number = 1;
     xp: number = 0;
-    health: number = 100;
+    health: number = MAX_HEALTH;
     evolution_number: number = 1;
     type: MonsterType;
+
     // Add in some sort of defense and attack
 
     constructor(
@@ -55,7 +61,7 @@ class Monster {
     // Use this function when adding to a player's XP
     // This function handles leveling up recursively
     public increase_xp(xp: number) {
-        // Level cappend at MAX_LEVEL
+        // Level capped at MAX_LEVEL
         if (this.level >= MAX_LEVEL) {
             this.xp = 0;
             return;
@@ -81,13 +87,34 @@ class Monster {
         this.increase_xp(xp - level_up_xp);
     }
 
-    // Evolves the monster.
-    evolve() {
-        this.evolution_number += 1;
+    // Adds a quarter of the max heath back to the monster
+    public heal() {
+        // TODO: Make a better healing algorithm
+        this.health += MAX_HEALTH / 4;
+        this.health = (this.health > MAX_HEALTH)? MAX_HEALTH : this.health;
     }
 
+    // Evolves the monster.
+    private evolve() {
+        if (this.evolution_number < 3) {
+            this.evolution_number += 1;
+        }
+    }
 
-    // Saves all user data to the database
+    // Returns the monster's image at its current evolution
+    public get_img(): string {
+        return img_string(this.id, this.evolution_number);
+    }
+
+    // Gets the monster data to be returned in an API call
+    public get_data(): MonsterRow {
+        const data: MonsterRow = monster2row(this);
+        data.img = this.get_img();
+
+        return data;
+    }
+
+    // Saves all monster data to the database
     // Returns true upon success, returns false on failure
     public save2db(): boolean {
         // TODO
@@ -98,9 +125,8 @@ class Monster {
     }
 }
 
-
-
 // Makeshift ORM for the database
+// Also used as API responses
 interface MonsterRow {
     name: string;
     id: number;
@@ -109,6 +135,7 @@ interface MonsterRow {
     health: number;
     evolution_number: number;
     type: number;
+    img: string | null;    // image code
 }
 
 function row2monster(row: MonsterRow): Monster {
@@ -131,7 +158,8 @@ function monster2row(monster: Monster): MonsterRow {
         xp: monster.xp,
         health: monster.health,
         evolution_number: monster.evolution_number,
-        type: monster.type
+        type: monster.type,
+        img: null   // We do not store the image code in the db
     }
 }
 
