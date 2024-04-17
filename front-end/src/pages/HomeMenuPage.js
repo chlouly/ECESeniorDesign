@@ -14,7 +14,10 @@ const HomeMenu = () => {
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-blue-100">
       <div className="text-4xl font-bold text-blue-800 mb-10">
-        SAT Monster Battle
+        PokiDips
+      </div>
+      <div className="text-2xl font-bold text-blue-800 mb-10">
+        Welcome to our SAT Monster Battle! Please select an option below.
       </div>
       <Link
         to="/start"
