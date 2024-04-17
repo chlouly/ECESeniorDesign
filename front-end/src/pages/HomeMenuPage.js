@@ -8,7 +8,7 @@ const HomeMenu = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('isAuthenticated');
     // Redirect to Cognito logout URL
-    window.location.href = "https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q";
+    window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/login&redirect_uri=https%3A%2F%2Fpokidips.games/login`;
 };
 
   return (
