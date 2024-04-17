@@ -36,12 +36,12 @@ const AppRouter = () => {
         <Router>
             <Routes>
                 <Route path="/" element={<PrivateRoute><HomeMenu /></PrivateRoute>} />
-                <Route path="/game" element={<GameInterface />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/join" element={<JoinGamePage />} />
-                <Route path="/start" element={<StartGamePage />} />
-                <Route path="/upload" element={<PdfUploadPage />} /> 
-                <Route path={`/game/:gameID`} element={<GameInterface />} />
+                {/* <Route path="/game" element={<PrivateRoute><GameInterface /></PrivateRoute>} /> */}
+                <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+                <Route path="/join" element={<PrivateRoute><JoinGamePage /></PrivateRoute>} />
+                <Route path="/start" element={<PrivateRoute><StartGamePage /></PrivateRoute>} />
+                <Route path="/upload" element={<PrivateRoute><PdfUploadPage /></PrivateRoute>} />
+                <Route path={`/game/:gameID`} element={<PrivateRoute><GameInterface /></PrivateRoute>} />
                 <Route path="/callback" element={<CallbackPage />} />
                 <Route path="/login" element={<LoginPage />} />
             </Routes>
