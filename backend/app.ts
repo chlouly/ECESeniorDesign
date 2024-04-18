@@ -12,7 +12,7 @@ import mysql from 'mysql';
 import e = require('express');
 
 import { ResCode, isResCode } from './error';
-import { fetch_monster } from './rds_actions';
+import { fetch_monster, fetch_player, new_player } from './rds_actions';
 
 const expressJwt = require('express-jwt');
 import { Request as JWTRequest } from 'express-jwt';
@@ -123,12 +123,48 @@ app.delete('/logout', (req: Request, res: Response) => {
   return res.status(ResCode.Ok).end();
 });
 
-app.post('/new_user', checkJwt, (req: ReqWithUser, res: Response) => {
+
+app.post('/new_user', checkJwt, async (req: ReqWithUser, res: Response) => {
   const userId = req.auth?.sub;  
   if (!userId) {
-      return res.status(401).send('User ID not found in token');
+    return res.status(ResCode.PIDUndef);
   }
-  res.send({ message: `User creation initiated for ID: ${userId}` });
+
+  let p_id = parseInt(userId);
+
+  if (isNaN(p_id)) {
+    return res.status(ResCode.PIDNaN);
+  }
+
+  let player: Player | ResCode = await fetch_player(p_id);
+
+  // Player was not found because of an RDS error
+  if (isResCode(player) && player === ResCode.RDSErr) {
+    return res.status(ResCode.RDSErr);
+  
+  // Player was not found becasue they do not exist, we make one
+  } else if (isResCode(player) && player === ResCode.NotFound) {
+    // Instantiate a blank new player
+    player = new Player("", -1, [], [], [], null, 1, 0);
+
+    // Insert blank player into DB, effectively assigning them an ID
+    const ret: number | ResCode = await new_player(player);
+
+    // Check if the insertion failed
+    if (isResCode(ret)) {
+      return res.status(ret);
+    }
+
+    // If not change the player's ID
+    // TODO: handle IDs already in use
+    player.update_id(ret);
+  } else if (!isResCode(player)) {
+    // Creation or Login was successful
+    return res.status(ResCode.LoginSuc).json(player.get_data());
+  }
+
+  // Failure
+  return res.status(ResCode.GnrlErr);
 });
 
 
