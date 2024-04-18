@@ -270,7 +270,7 @@ app.post('/joinrandom', (req: Request, res: Response) => {
 //
 // If a match with matching gameNumber exists then it
 // attempts to join, if not then it attempts to create it.
-app.post('/joingame', (req: Request, res: Response) => {
+app.post('/joingame', async (req: Request, res: Response) => {
   // Validating request body
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
@@ -318,7 +318,7 @@ app.post('/joingame', (req: Request, res: Response) => {
   }
 
   // All other edge cases passed
-  match.join(player)
+  await match.join(player)
 
   return res.status(ResCode.Ok).json(match.get_data());
 });
@@ -338,7 +338,7 @@ app.post('/joingame', (req: Request, res: Response) => {
 // then nothing hapens. If there is conflicting backend
 // information, it gets corrected by leaving the game
 // automaticaly
-app.post('/action', (req: Request, res: Response) => {
+app.post('/action', async (req: Request, res: Response) => {
   // Validating request body
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
@@ -366,7 +366,7 @@ app.post('/action', (req: Request, res: Response) => {
   }
 
   // Take turn and record if the turn was successful
-  code = match.take_turn(p_id, action, m_id);
+  code = await match.take_turn(p_id, action, m_id);
 
   // Return the code and the match data
   return res.status(code).json(match.get_data());

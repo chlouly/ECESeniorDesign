@@ -41,7 +41,7 @@ class Match {
         return this.to_move === id;
     }
 
-    public join(player: Player): boolean {
+    public async join(player: Player): Promise<boolean> {
         // Match is full
         if (this.is_full()) { return false; }
 
@@ -60,9 +60,11 @@ class Match {
         } else { return false }
 
         if (player.current_monster === null) {
-            const monster = fetch_monster(player.get_id(), player.monsters_roster[0]);
-            if (!isResCode(monster)) {
-                player.current_monster = monster;
+            if (player.monsters_roster[0] !== undefined) {
+                const monster = await fetch_monster(player.get_id(), player.monsters_roster[0]);
+                if (!isResCode(monster)) {
+                    player.current_monster = monster;
+                }
             }
         }
 
@@ -100,7 +102,7 @@ class Match {
     }
 
     // Currently does nothing. Soon will make the game execute 1 turn
-    public take_turn(id: number, action: Action, m_id: number | null): ResCode {
+    public async take_turn(id: number, action: Action, m_id: number | null): Promise<ResCode> {
         // You're not playing
         if (!this.is_in_match(id)) {
             return ResCode.NotFound;
@@ -115,7 +117,7 @@ class Match {
         // ANSWER SAT QUESTION
 
         // Perform the action
-        let code: ResCode = this.players[id].perform_action(this.players[this.next_to_move], action, m_id);
+        let code: ResCode = await this.players[id].perform_action(this.players[this.next_to_move], action, m_id);
 
         // If the turn was successful, go to the next one
         if (code === ResCode.Ok) {

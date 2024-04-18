@@ -50,6 +50,8 @@ async function setup_rds_tables() {
       name VARCHAR(50) NOT NULL,
       level INT NOT NULL,
       xp INT NOT NULL,
+      cur_egg INT,
+      cur_m_id INT
     );
 
     -- Create the Monsters table with a foreign key reference to the Users table
@@ -57,14 +59,19 @@ async function setup_rds_tables() {
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       user_id INT,
+      level INT,
+      xp INT,
+      ev_num INT,
+      type INT,
       FOREIGN KEY (user_id) REFERENCES Users(id)
     );
 
     -- Creating the Eggs table with foreign key reference to Users
     CREATE TABLE IF NOT EXISTS ${EGG_TABLE_NAME} (
       id SERIAL PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
       user_id INT,
+      type INT,
+      hatch_start_time INT,
       FOREIGN KEY (user_id) REFERENCES Users(id)
     );
 
@@ -92,5 +99,6 @@ export {
   setup_rds_tables,
   get_rds_connection,
   USER_TABLE_NAME,
-  MONSTER_TABLE_NAME
+  MONSTER_TABLE_NAME,
+  EGG_TABLE_NAME
 }

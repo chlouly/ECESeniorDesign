@@ -40,6 +40,9 @@ export enum ResCode {
     WaitTimeout = 555,          // Took too long to become your turn, try again
     NotInMatch = 556,           // The desired player is not in this match
 
+    // RDS Errors
+    RDSErr = 600,
+
 
     // More to come...
 
