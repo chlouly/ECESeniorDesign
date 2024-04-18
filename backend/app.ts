@@ -14,8 +14,25 @@ import e = require('express');
 import { ResCode, isResCode } from './error';
 import { fetch_monster } from './rds_actions';
 
+const expressJwt = require('express-jwt');
+import { Request as JWTRequest } from 'express-jwt';
+import jwksRsa from 'jwks-rsa';
 
-dotenv.config();
+const checkJwt = expressJwt({
+  secret: jwksRsa.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: 'https://pokidips.auth.us-east-1.amazoncognito.com/.well-known/jwks.json'
+  }),
+  audience: '6ke1tj0bnmg6ij6t6354lfs30q',
+  issuer: `https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ZyFvL3MUy`,
+  algorithms: ['RS256']
+});
+
+interface ReqWithUser extends Request {
+  auth?: JWTRequest['auth'];  // 'auth' will contain JWT claims if token is valid
+}
 
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -104,6 +121,14 @@ app.delete('/logout', (req: Request, res: Response) => {
   delete online[id];
 
   return res.status(ResCode.Ok).end();
+});
+
+app.post('/new_user', checkJwt, (req: ReqWithUser, res: Response) => {
+  const userId = req.auth?.sub;  
+  if (!userId) {
+      return res.status(401).send('User ID not found in token');
+  }
+  res.send({ message: `User creation initiated for ID: ${userId}` });
 });
 
 
