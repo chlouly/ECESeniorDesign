@@ -75,6 +75,7 @@ function GameInterface() {
     })
       .then((response) => {
         if (response.status === 200) {
+          console.log("Response 200");
           return response.json();
         } else {
           console.error("Not response 200");
@@ -244,7 +245,7 @@ function GameInterface() {
           <p className="text-blue-800 font-semibold">
             HEALTH: 100
           </p>
-          <p className="text-blue-700">gameData[0].name</p>
+          <p className="text-blue-700">{gameData[0].name}</p>
         </div>
       </div>
 
