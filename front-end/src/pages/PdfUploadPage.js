@@ -1,11 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { FiUpload } from 'react-icons/fi';
-
+import { useNavigate } from 'react-router-dom';
 
 const UploadPage = () => {
     const [file, setFile] = useState(null);
     const [name, setName] = useState('');
     const fileInputRef = useRef(null);
+
+    const navigate = useNavigate();
 
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
@@ -34,10 +36,12 @@ const UploadPage = () => {
                     .then((data) => {
                         console.log('Response:', data);
                         alert('File uploaded successfully');
+                        navigate('/');
                     })
                     .catch((error) => {
                         console.error('Error:', error);
                         alert('An error occurred while uploading the file');
+                        navigate('/');
                     });
             };
             reader.readAsText(file);
@@ -75,6 +79,12 @@ const UploadPage = () => {
             >
                 <FiUpload className="mr-2" />
                 Upload
+            </button>
+            <button
+                className="flex items-center justify-center w-full max-w-md px-6 py-3 text-white bg-red-500 rounded-md shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                onClick={() => navigate('/')}
+            >
+                Cancel
             </button>
             </div>
         </div>
