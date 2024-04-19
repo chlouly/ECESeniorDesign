@@ -6,6 +6,7 @@ const StartGamePage = () => {
   const [gameNumber, setGameNumber] = useState(''); // Initialize gameNumber as an empty string
   const [hasJoined, setHasJoined] = useState(false);
   const navigate = useNavigate();
+
   const handleStartGame = () => {
     console.log('Game started');
     const user_ID = 1; // Assuming you have a logic to set this dynamically
