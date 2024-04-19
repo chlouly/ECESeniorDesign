@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
 
 function GameInterface() {
+  console.log('GameInterface');
   const [players, setPlayers] = useState([]);
   const [to_move, setToMove] = useState(0);
   const [next_to_move, setNextToMove] = useState(0);
@@ -107,58 +108,81 @@ function GameInterface() {
 
   };
   const handleWaitForOtherPlayer = () => {
+    const controller = new AbortController();  // Create a new instance of AbortController
+    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);  // Set timeout for 5 minutes
+
     fetch("/waittomove", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id: 1, gameNumber: gameNumber }),
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: 1, gameNumber: gameNumber }),
+        signal: controller.signal  // Pass the signal to fetch
     })
-      .then((response) => {
+    .then(response => {
+        clearTimeout(timeoutId);  // Clear the timeout if the fetch completes in time
         if (response.status === 200) {
-          return response.json();
+            return response.json();
         } else {
-          console.error("Not response 200");
-          throw new Error("Failed to wait for other player");
+            console.error("Not response 200");
+            throw new Error("Failed to wait for other player");
         }
-      })
-      .then((data) => {
-        // Data should have the format { gameData: YOUR_GAME_DATA }
+    })
+    .then(data => {
         console.log("Other player has moved");
         console.log(data);
-      })
-      .catch((error) => {
-        alert(error);
-        console.error(error);
-      });
-  };
+    })
+    .catch(error => {
+        if (error.name === 'AbortError') {
+            console.error("Fetch aborted due to timeout");
+            alert("Request timed out. Please try again.");
+        } else {
+            alert(error.message);
+            console.error(error);
+        }
+    });
+};
+
 
   useEffect(() => {
-    
-    setPlayers(localStorage.getItem('players').split(','));
-    setToMove(localStorage.getItem('to_move'));
-    setNextToMove(localStorage.getItem('next_to_move'));
-    console.log(players);
-    console.log(to_move);
-    console.log(next_to_move);
-    
-    if (localStorage.getItem('paragraph_data')) {
-      const data = JSON.parse(localStorage.getItem('paragraph_data'));
-      setParagraphData({
-        paragraph: data.paragraph,
-        question: {
-          text: data.question.text,
-          options: data.question.options,
-        },
-      });
-    } else {
-      getNewParagraph();
+    try {
+      const storedPlayers = localStorage.getItem('players');
+      if (storedPlayers) {
+        const parsedPlayers = JSON.parse(storedPlayers);
+        setPlayers(parsedPlayers);
+        console.log('Parsed Players:', parsedPlayers);
+      }
+  
+      const toMove = localStorage.getItem('to_move');
+      setToMove(toMove);
+      console.log('To Move:', to_move);
+  
+      const nextToMove = localStorage.getItem('next_to_move');
+      setNextToMove(nextToMove);
+      console.log('Next to Move:', next_to_move);
+  
+      // Uncomment and modify this section as needed.
+      // if (localStorage.getItem('paragraph_data')) {
+      //   const data = JSON.parse(localStorage.getItem('paragraph_data'));
+      //   setParagraphData({
+      //     paragraph: data.paragraph,
+      //     question: {
+      //       text: data.question.text,
+      //       options: data.question.options,
+      //     },
+      //   });
+      // } else {
+      //   getNewParagraph();
+      // }
+  
+      
+      handleWaitForOtherPlayer(); 
+      
+    } catch (error) {
+      console.error('Error loading data from localStorage:', error);
     }
-    setTimeout(() => {
-      handleWaitForOtherPlayer();
-    }, 15000);
-
   }, []);
+  
 
   return (
     <div
@@ -197,7 +221,12 @@ function GameInterface() {
           <p className="text-blue-800 font-semibold">
             HEALTH: 100
           </p>
+          { players.length > 0 ? <>
           <p className="text-blue-700">{players[0].name}</p>
+          <p className="text-blue-700">Level: {players[0].level}</p>
+          <p className="text-blue-700">XP: {players[0].xp}</p>
+          </> : <ClipLoader color={"#000"} loading={true} size={50} />}
+
         </div>
       </div>
 
@@ -232,7 +261,7 @@ function GameInterface() {
       </div>
       
       <div className="flex flex-col col-span-1 row-span-2 items-center">
-      { players.length > 1 ? <>
+        { players.length > 1 ? <>
         <img
           src={monster2}
           alt="Monster 2"
@@ -242,12 +271,12 @@ function GameInterface() {
           <p className="text-blue-800 font-semibold">
             HEALTH: 100
           </p>
-          {/* <p className="text-blue-700">{gameData[1].name}</p> */}
-        </div></>
-        : <>
-        <ClipLoader color={"#000"} loading={true} size={50} />
-        <p className="text-blue-800 font-semibold">Waiting for other player...</p>
-        </> } 
+          <p className="text-blue-700">{players[1].name}</p>
+          <p className="text-blue-700">Level: {players[1].level}</p>
+          <p className="text-blue-700">XP: {players[1].xp}</p>
+        </div>
+        </> : <ClipLoader color={"#000"} loading={true} size={50} />}
+
       </div>
       
     </div>

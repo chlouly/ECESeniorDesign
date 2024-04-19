@@ -31,7 +31,7 @@ const StartGamePage = () => {
         localStorage.setItem('gameNumber', data.gameNumber); // Storing the game number in local storage
         localStorage.setItem('to_move', data.to_move); // Storing the player ID in local storage
         localStorage.setItem('next_to_move', data.next_to_move); // Storing the player ID in local storage
-        localStorage.setItem('players', data.players); // Storing the player ID in local storage
+        localStorage.setItem('players', JSON.stringify(data.players)); // Storing the player ID in local storage
 
         setGameNumber(data.gameNumber); // Updating state with the new game number
         navigate(`/game/${data.gameNumber}`); // Navigating using the updated game number
