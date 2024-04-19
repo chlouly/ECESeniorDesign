@@ -135,9 +135,9 @@ class Match {
             }
 
             const checkInterval = setInterval(() => {
-                if (this.is_your_turn(id)) {
+                if (this.is_your_turn(id) && this.is_full()) {
                     clearInterval(checkInterval);
-                    resolve(ResCode.Ok);
+                    resolve(ResCode.YourTurn);
                 }
             }, TURN_POLL);
 
