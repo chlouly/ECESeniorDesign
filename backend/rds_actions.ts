@@ -40,7 +40,7 @@ async function new_player(player: Player): Promise<ResCode> {
 
         return ResCode.Ok;
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- new_player():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -79,7 +79,7 @@ async function update_player(player: Player): Promise<ResCode> {
 
         return ResCode.Ok;
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- update_player():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -108,7 +108,7 @@ async function fetch_player(p_id: number): Promise<Player | ResCode> {
 
         return row2player(res.rows[0]);
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- fetch_player():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -135,7 +135,7 @@ async function delete_player(p_id: number): Promise<ResCode> {
 
         return ResCode.Ok;
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- delete_player():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -171,7 +171,7 @@ async function new_monster(p_id: number, monster: Monster): Promise<number | Res
         return res.rows[0].id;
 
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- new_monster():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -205,7 +205,7 @@ async function update_monster(p_id: number, monster: Monster): Promise<ResCode> 
 
         return ResCode.Ok;
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- update_monster():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -236,7 +236,7 @@ async function fetch_monster(p_id: number, m_id: number): Promise<Monster | ResC
 
         return row2monster(row);
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- fetch_monster():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -265,7 +265,7 @@ async function delete_monster(p_id: number, m_id: number): Promise<ResCode> {
 
         return ResCode.Ok;
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- delete_monster():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -299,7 +299,7 @@ async function new_egg(p_id: number, egg: Egg): Promise<number | ResCode> {
         return res.rows[0].id;
 
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- new_egg():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -333,7 +333,7 @@ async function update_egg(p_id: number, egg: Egg): Promise<ResCode> {
 
         return ResCode.Ok;
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- update_egg():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -364,7 +364,7 @@ async function fetch_egg(p_id: number, e_id: number): Promise<Egg | ResCode> {
 
         return row2egg(row);
     } catch (error) {
-        logger.error('Error Manipulating RDS DB:', error);
+        logger.error('Error Manipulating RDS DB -- fetch_egg():', error);
         return ResCode.RDSErr;
     } finally {
         await client.end();
@@ -393,7 +393,8 @@ async function delete_egg(p_id: number, egg: Egg): Promise<ResCode> {
 
         return ResCode.Ok;
     } catch (error) {
-
+        logger.error('Error Manipulating RDS DB -- delete_egg():', error);
+        return ResCode.RDSErr;
     } finally {
         await client.end();
     }
