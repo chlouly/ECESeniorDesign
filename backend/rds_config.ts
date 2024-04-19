@@ -85,6 +85,12 @@ async function setup_rds_tables() {
     ADD COLUMN bench INT[];
     ALTER TABLE Users
     ADD COLUMN eggs INT[];
+
+    -- Modifying user table to take id as an input while maintaining that it is a primary key
+    DROP SEQUENCE IF EXISTS ${USER_TABLE_NAME}_id_seq;
+    CREATE SEQUENCE ${USER_TABLE_NAME}_id_seq;
+    ALTER TABLE ${USER_TABLE_NAME} ALTER COLUMN id SET DEFAULT nextval('${USER_TABLE_NAME}_id_seq'::regclass);
+    ALTER TABLE ${USER_TABLE_NAME} ADD CONSTRAINT unique_id UNIQUE (id);
     `;
     await client.query(query);
     logger.debug(`Successfully created tables`);

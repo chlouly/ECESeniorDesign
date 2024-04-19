@@ -101,18 +101,6 @@ class Player {
     private is_in_bench(id: number): boolean { return this.monsters_bench.some(m_id => m_id === id) }
 
 
-    public update_id(id: number): ResCode {
-        // Updates the player's ID (only to be used on account creation in the /new_user endpoint)
-
-        // TODO: Check if the user ID is already taken
-        // This should never be the case because IDs are assigned
-        // by the DB, but better to be safe
-
-        this.id = id;
-
-        return ResCode.Ok
-    }
-
     /////////////////////////////////////////////
     //         USER LEVEL AND XP MANIP         //
     /////////////////////////////////////////////

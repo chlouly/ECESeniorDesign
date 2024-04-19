@@ -12,7 +12,7 @@ import mysql from 'mysql';
 import e = require('express');
 
 import { ResCode, isResCode } from './error';
-import { fetch_monster, fetch_player, new_player } from './rds_actions';
+import { fetch_monster, fetch_player, new_egg, new_player } from './rds_actions';
 
 const expressJwt = require('express-jwt');
 import { Request as JWTRequest } from 'express-jwt';
@@ -123,7 +123,14 @@ app.delete('/logout', (req: Request, res: Response) => {
   return res.status(ResCode.Ok).end();
 });
 
-
+////////////////////////////////////////////////////////////////////////////
+// This endpoint gets a user ID from AWS Cognito and attempts to retrieve a
+// player with the same ID from the RDS Database. If no such player exists,
+// then a new player with that ID is created.
+//
+// Various ResCodes are returned on failure.
+// The Player Data with either ResCode.LoginSuc or ResCode.SignUpSuc status
+// is returned on success.
 app.post('/new_user', checkJwt, async (req: ReqWithUser, res: Response) => {
   const userId = req.auth?.sub;  
   if (!userId) {
@@ -136,35 +143,38 @@ app.post('/new_user', checkJwt, async (req: ReqWithUser, res: Response) => {
     return res.status(ResCode.PIDNaN);
   }
 
+  // Attempt to retrieve player object
   let player: Player | ResCode = await fetch_player(p_id);
 
-  // Player was not found because of an RDS error
-  if (isResCode(player) && player === ResCode.RDSErr) {
-    return res.status(ResCode.RDSErr);
-  
-  // Player was not found becasue they do not exist, we make one
-  } else if (isResCode(player) && player === ResCode.NotFound) {
-    // Instantiate a blank new player
-    player = new Player("", -1, [], [], [], null, 1, 0);
+  // Player was found
+  if (!isResCode(player)) {
+    // Put the player in the online dict
+    online[p_id] = player;
 
-    // Insert blank player into DB, effectively assigning them an ID
-    const ret: number | ResCode = await new_player(player);
-
-    // Check if the insertion failed
-    if (isResCode(ret)) {
-      return res.status(ret);
-    }
-
-    // If not change the player's ID
-    // TODO: handle IDs already in use
-    player.update_id(ret);
-  } else if (!isResCode(player)) {
-    // Creation or Login was successful
+    // Return Player Data
     return res.status(ResCode.LoginSuc).json(player.get_data());
+  } else if (player === ResCode.RDSErr) {
+    // Player was not found because of an RDS error
+    // (This doesn't necessarily mean that the player DNE)
+    return res.status(ResCode.RDSErr).end();
   }
 
-  // Failure
-  return res.status(ResCode.GnrlErr);
+  // At this point the player did not exist, so we make a new one
+  player = new Player("", p_id, [], [], [], null, 1, 0);
+
+  // Adding the player to the DB
+  const code = await new_player(player)
+
+  // Insertion failed
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
+  }
+
+  // Put the player in the online dict
+  online[p_id] = player;
+
+  // Return Player Data
+  return res.status(ResCode.SignUpSuc).json(player.get_data());
 });
 
 

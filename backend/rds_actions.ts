@@ -9,17 +9,18 @@ import { Egg, EggRow, egg2row, row2egg } from './game_elems/egg';
 
 /* --- PLAYER DB INTERACTIONS --- */
 // NEW PLAYER
-async function new_player(player: Player): Promise<number | ResCode> {
+async function new_player(player: Player): Promise<ResCode> {
     const client = await get_rds_connection();
     const query = `
-        INSERT INTO ${USER_TABLE_NAME} (name level, xp, cur_egg, cur_m_id, roster, bench, eggs)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO ${USER_TABLE_NAME} (id, name, level, xp, cur_egg, cur_m_id, roster, bench, eggs)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id;  // This will return the new monster's ID after insertion
     `;
 
     const row = player2row(player);
 
     const values = [
+        row.id,
         row.name,
         row.level,
         row.xp,
@@ -37,7 +38,7 @@ async function new_player(player: Player): Promise<number | ResCode> {
             return ResCode.RDSErr;
         }
 
-        return res.rows[0].id
+        return ResCode.Ok;
     } catch (error) {
         logger.error('Error Manipulating RDS DB:', error);
         return ResCode.RDSErr;
