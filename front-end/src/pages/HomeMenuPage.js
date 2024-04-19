@@ -2,28 +2,23 @@ import React, { useEffect } from "react";
 import { FiPlayCircle, FiUsers, FiSettings } from "react-icons/fi";
 import { Link } from "react-router-dom";
 const HomeMenu = () => {
-
   const handleNewUser = async () => {
     const access_token = localStorage.getItem("access_token");
     try {
-      const response = await fetch("/newuser", {
-        method: "GET", // or 'POST' etc., depending on the API requirement
+      const response = await fetch("/new_user", {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${access_token}`, // Include the access token in the Authorization header
           "Content-Type": "application/json",
         },
       });
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const data = await response.json(); // Assuming the server responds with JSON
-      console.log(data); // Process the data
-    } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
+      const data = await response.json();
+      console.log(data);
     }
-  };
+    catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  }
 
   useEffect(() => {
     handleNewUser();
