@@ -6,31 +6,6 @@ const StartGamePage = () => {
   const [gameNumber, setGameNumber] = useState(''); // Initialize gameNumber as an empty string
   const [hasJoined, setHasJoined] = useState(false);
   const navigate = useNavigate();
-  const handleNewUser = async () => {
-    const access_token = localStorage.getItem("access_token");
-    try {
-      const response = await fetch("/newuser", {
-        method: "GET", // or 'POST' etc., depending on the API requirement
-        headers: {
-          Authorization: `Bearer ${access_token}`, // Include the access token in the Authorization header
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const data = await response.json(); // Assuming the server responds with JSON
-      console.log(data); // Process the data
-    } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
-    }
-  };
-
-  useEffect(() => {
-    handleNewUser();
-  }, []);
 
   const handleStartGame = () => {
     console.log('Game started');
