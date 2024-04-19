@@ -3,7 +3,6 @@ import { FiPlayCircle, FiUsers, FiSettings } from "react-icons/fi";
 import { Link } from "react-router-dom";
 const HomeMenu = () => {
 
-  const access_token = localStorage.getItem("access_token");
 
   const handleLogout = () => {
     // Clear local authentication state
@@ -13,31 +12,7 @@ const HomeMenu = () => {
     // Redirect to Cognito logout URL
     window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/login&redirect_uri=https%3A%2F%2Fpokidips.games/login`;
   };
-  const handleNewUser = async () => {
-    const access_token = localStorage.getItem("access_token");
-    try {
-      const response = await fetch("/newuser", {
-        method: "GET", // or 'POST' etc., depending on the API requirement
-        headers: {
-          Authorization: `Bearer ${access_token}`, // Include the access token in the Authorization header
-          "Content-Type": "application/json",
-        },
-      });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const data = await response.json(); // Assuming the server responds with JSON
-      console.log(data); // Process the data
-    } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
-    }
-  };
-
-  useEffect(() => {
-    handleNewUser();
-  }, [access_token]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-blue-100">
