@@ -3,6 +3,9 @@
 //  definitions for monsters
 //
 
+import { ResCode } from "../error";
+import { update_monster } from "../rds_actions";
+
 const MAX_LEVEL = 100;
 const MAX_HEALTH = 100;
 
@@ -115,13 +118,10 @@ class Monster {
     }
 
     // Saves all monster data to the database
-    // Returns true upon success, returns false on failure
-    public save2db(): boolean {
+    public async save2db(p_id: number): Promise<ResCode> {
         // TODO
         // Save user data to the database
-        // retrun true on success and false on failure
-
-        return true;
+        return await update_monster(p_id, this);
     }
 }
 
