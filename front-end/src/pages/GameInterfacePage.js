@@ -138,6 +138,10 @@ function GameInterface() {
     setPlayers(localStorage.getItem('players').split(','));
     setToMove(localStorage.getItem('to_move'));
     setNextToMove(localStorage.getItem('next_to_move'));
+    console.log(players);
+    console.log(to_move);
+    console.log(next_to_move);
+    
     if (localStorage.getItem('paragraph_data')) {
       const data = JSON.parse(localStorage.getItem('paragraph_data'));
       setParagraphData({
