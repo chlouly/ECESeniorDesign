@@ -29,7 +29,7 @@ const CallbackPage = () => {
                 }
             });
 
-            const { id_token, access_token } = response.data;
+            const { id_token, access_token} = response.data;
             localStorage.setItem('id_token', id_token);
             localStorage.setItem('access_token', access_token);
             localStorage.setItem('isAuthenticated', 'true');
