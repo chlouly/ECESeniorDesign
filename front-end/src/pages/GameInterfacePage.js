@@ -3,6 +3,7 @@ import monster1 from "../images/monster_1.webp";
 import monster2 from "../images/monster_2.webp";
 import battle_arena from "../images/battle_arena.jpg";
 import { useNavigate } from "react-router-dom";
+import ClipLoader from "react-spinners/ClipLoader";
 
 function GameInterface() {
   const [players, setPlayers] = useState([]);
@@ -53,6 +54,8 @@ function GameInterface() {
         if (data.error) {
           console.error("Failed to fetch data:", data.error);
         } else {
+          localStorage.setItem('paragraph_data', JSON.stringify(data));
+
           setParagraphData({
             paragraph: data.paragraph,
             question: {
@@ -65,34 +68,6 @@ function GameInterface() {
       .catch((error) => {
         console.error("Error fetching data:", error);
       });
-  };
-
-  const waittomove = async () => {
-    fetch("/waittomove", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id: 1, gameNumber: gameNumber }),
-    })
-      .then((response) => {
-        if (response.status === 200) {
-          return response.json();
-        } else {
-          console.error("Not response 200");
-          throw new Error("Failed to wait for other player");
-        }
-      })
-      .then((data) => {
-        // Data should have the format { gameData: YOUR_GAME_DATA }
-        console.log("Other player has moved");
-        console.log(data);
-      })
-      .catch((error) => {
-        alert(error);
-        console.error(error);
-      });
-
   };
 
   const handleActionClick = (action) => {
@@ -117,22 +92,19 @@ function GameInterface() {
         }
       })
       .then((data) => {
-        // Data should have the format { gameData: YOUR_GAME_DATA }
         console.log("Action performed successfully");
         console.log(data);
+        localStorage.removeItem('paragraph_data');
         getNewParagraph();
       })
       .catch((error) => {
         alert(error);
         console.error(error);
       });
-
-    // Make a new API call to wait for the other player. Time out after 15 seconds.
     setTimeout(() => {
       handleWaitForOtherPlayer();
     }, 15000);
 
-    // I will also get game data back from the server
   };
   const handleWaitForOtherPlayer = () => {
     fetch("/waittomove", {
@@ -159,13 +131,6 @@ function GameInterface() {
         alert(error);
         console.error(error);
       });
-
-    // Replace with actual API call
-    // Post, WaitForOtherPlayer
-    // Gamenumber
-    // PlayerNumber
-
-    // I will also get game data back from the server
   };
 
   useEffect(() => {
@@ -173,7 +138,21 @@ function GameInterface() {
     setPlayers(localStorage.getItem('players').split(','));
     setToMove(localStorage.getItem('to_move'));
     setNextToMove(localStorage.getItem('next_to_move'));
-    waittomove();
+    if (localStorage.getItem('paragraph_data')) {
+      const data = JSON.parse(localStorage.getItem('paragraph_data'));
+      setParagraphData({
+        paragraph: data.paragraph,
+        question: {
+          text: data.question.text,
+          options: data.question.options,
+        },
+      });
+    } else {
+      getNewParagraph();
+    }
+    setTimeout(() => {
+      handleWaitForOtherPlayer();
+    }, 15000);
 
   }, []);
 
@@ -214,7 +193,7 @@ function GameInterface() {
           <p className="text-blue-800 font-semibold">
             HEALTH: 100
           </p>
-          {/* <p className="text-blue-700">{gameData[0].name}</p> */}
+          <p className="text-blue-700">{players[0].name}</p>
         </div>
       </div>
 
@@ -247,8 +226,9 @@ function GameInterface() {
           </button>
         </div>
       </div>
-
+      
       <div className="flex flex-col col-span-1 row-span-2 items-center">
+      { players.length > 1 ? <>
         <img
           src={monster2}
           alt="Monster 2"
@@ -259,8 +239,13 @@ function GameInterface() {
             HEALTH: 100
           </p>
           {/* <p className="text-blue-700">{gameData[1].name}</p> */}
-        </div>
+        </div></>
+        : <>
+        <ClipLoader color={"#000"} loading={true} size={50} />
+        <p className="text-blue-800 font-semibold">Waiting for other player...</p>
+        </> } 
       </div>
+      
     </div>
   );
 }
