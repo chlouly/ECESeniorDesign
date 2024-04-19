@@ -245,7 +245,7 @@ function GameInterface() {
           <p className="text-blue-800 font-semibold">
             HEALTH: 100
           </p>
-          <p className="text-blue-700">{gameData[0].name}</p>
+          {/* <p className="text-blue-700">{gameData[0].name}</p> */}
         </div>
       </div>
 
@@ -289,7 +289,7 @@ function GameInterface() {
           <p className="text-blue-800 font-semibold">
             HEALTH: 100
           </p>
-          <p className="text-blue-700">{gameData[1].name}</p>
+          {/* <p className="text-blue-700">{gameData[1].name}</p> */}
         </div>
       </div>
     </div>
