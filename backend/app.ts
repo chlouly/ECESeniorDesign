@@ -20,21 +20,7 @@ const expressJwt = require('express-jwt');
 import { Request as JWTRequest } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
 
-const checkJwt = expressJwt({
-  secret: jwksRsa.expressJwtSecret({
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-      jwksUri: 'https://pokidips.auth.us-east-1.amazoncognito.com/.well-known/jwks.json'
-  }),
-  audience: '6ke1tj0bnmg6ij6t6354lfs30q',
-  issuer: `https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ZyFvL3MUy`,
-  algorithms: ['RS256']
-});
 
-interface ReqWithUser extends Request {
-  auth?: JWTRequest['auth'];  // 'auth' will contain JWT claims if token is valid
-}
 
 const pool = mysql.createPool({
   connectionLimit: 10,
@@ -191,51 +177,51 @@ app.delete('/logout', (req: Request, res: Response) => {
 // Various ResCodes are returned on failure.
 // The Player Data with either ResCode.LoginSuc or ResCode.SignUpSuc status
 // is returned on success.
-app.post('/new_user', checkJwt, async (req: ReqWithUser, res: Response) => {
-  const userId = req.auth?.sub;  
-  if (!userId) {
-    return res.status(ResCode.PIDUndef);
-  }
+// app.post('/new_user', checkJwt, async (req: ReqWithUser, res: Response) => {
+//   const userId = req.auth?.sub;  
+//   if (!userId) {
+//     return res.status(ResCode.PIDUndef);
+//   }
 
-  let p_id = parseInt(userId);
+//   let p_id = parseInt(userId);
 
-  if (isNaN(p_id)) {
-    return res.status(ResCode.PIDNaN);
-  }
+//   if (isNaN(p_id)) {
+//     return res.status(ResCode.PIDNaN);
+//   }
 
-  // Attempt to retrieve player object
-  let player: Player | ResCode = await fetch_player(p_id);
+//   // Attempt to retrieve player object
+//   let player: Player | ResCode = await fetch_player(p_id);
 
-  // Player was found
-  if (!isResCode(player)) {
-    // Put the player in the online dict
-    online[p_id] = player;
+//   // Player was found
+//   if (!isResCode(player)) {
+//     // Put the player in the online dict
+//     online[p_id] = player;
 
-    // Return Player Data
-    return res.status(ResCode.LoginSuc).json(player.get_data());
-  } else if (player === ResCode.RDSErr) {
-    // Player was not found because of an RDS error
-    // (This doesn't necessarily mean that the player DNE)
-    return res.status(ResCode.RDSErr).end();
-  }
+//     // Return Player Data
+//     return res.status(ResCode.LoginSuc).json(player.get_data());
+//   } else if (player === ResCode.RDSErr) {
+//     // Player was not found because of an RDS error
+//     // (This doesn't necessarily mean that the player DNE)
+//     return res.status(ResCode.RDSErr).end();
+//   }
 
-  // At this point the player did not exist, so we make a new one
-  player = new Player("", p_id, [], [], [], null, 1, 0);
+//   // At this point the player did not exist, so we make a new one
+//   player = new Player("", p_id, [], [], [], null, 1, 0);
 
-  // Adding the player to the DB
-  const code = await new_player(player)
+//   // Adding the player to the DB
+//   const code = await new_player(player)
 
-  // Insertion failed
-  if (code !== ResCode.Ok) {
-    return res.status(code).end();
-  }
+//   // Insertion failed
+//   if (code !== ResCode.Ok) {
+//     return res.status(code).end();
+//   }
 
-  // Put the player in the online dict
-  online[p_id] = player;
+//   // Put the player in the online dict
+//   online[p_id] = player;
 
-  // Return Player Data
-  return res.status(ResCode.SignUpSuc).json(player.get_data());
-});
+//   // Return Player Data
+//   return res.status(ResCode.SignUpSuc).json(player.get_data());
+// });
 
 
 ///////////////////////////////////////////////////////////
@@ -453,6 +439,7 @@ app.post('/joingame', async (req: Request, res: Response) => {
     const match = new Match(null);
     match.join(player)
     matches[match.match_number] = match;
+    console.log(match.get_data());
     return res.status(ResCode.Ok).json(match.get_data());
   }
 
