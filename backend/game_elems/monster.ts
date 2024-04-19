@@ -82,8 +82,6 @@ class Monster {
         this.xp = 0;
         this.level += 1;
 
-        // TODO - ADD INCREASES TO ATTACK AND DEFENSE HERE
-
         // Evolve the monster if it reaches level 33 or 66
         if (this.level === 33 || this.level === 66) { this.evolve() }
 
@@ -119,7 +117,6 @@ class Monster {
 
     // Saves all monster data to the database
     public async save2db(p_id: number): Promise<ResCode> {
-        // TODO
         // Save user data to the database
         return await update_monster(p_id, this);
     }
