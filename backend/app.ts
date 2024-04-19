@@ -229,6 +229,7 @@ app.delete('/logout', (req: Request, res: Response) => {
 // The Player Data with either ResCode.LoginSuc or ResCode.SignUpSuc status
 // is returned on success.
 
+
 app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
   const user = (req as any).user as DecodedToken; // Use type assertion here
   if (user) {
@@ -501,7 +502,8 @@ app.post('/joingame', async (req: Request, res: Response) => {
     const match = new Match(null);
     match.join(player)
     matches[match.match_number] = match;
-    return res.status(ResCode.Ok).json({'gameNumber' : match.match_number})
+    console.log(match.get_data());
+    return res.status(ResCode.Ok).json(match.get_data());
   }
 
   // Parsing gameNumber request data
@@ -622,7 +624,6 @@ app.get('/waittomove', async (req: Request, res: Response) => {
   let wait_code: ResCode;
   wait_code = await match.wait_to_move(id);
 
-  // TODO: Will soon return game state 
   return res.status(wait_code).end(match.get_data()) ;
 });
 

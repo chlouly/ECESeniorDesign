@@ -65,8 +65,8 @@ function GameInterface() {
       });
   };
 
-  const fetchInitialGameData = async () => {
-    fetch("/initialgame", {
+  const waittomove = async () => {
+    fetch("/waittomove", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -75,24 +75,22 @@ function GameInterface() {
     })
       .then((response) => {
         if (response.status === 200) {
-          console.log("Response 200");
           return response.json();
         } else {
           console.error("Not response 200");
-          throw new Error("Failed to fetch initial game data");
+          throw new Error("Failed to wait for other player");
         }
       })
       .then((data) => {
         // Data should have the format { gameData: YOUR_GAME_DATA }
-        setGameData(data);
-        console.log("Initial game data fetched successfully");
+        console.log("Other player has moved");
         console.log(data);
-        getNewParagraph();
       })
       .catch((error) => {
         alert(error);
         console.error(error);
       });
+
   };
 
   const handleActionClick = (action) => {
@@ -169,43 +167,43 @@ function GameInterface() {
   };
 
   useEffect(() => {
-    fetchInitialGameData();
+    waittomove();
 
-    const handleBeforeUnload = (event) => {
-      // Perform actions before the component unloads
-      // Make a call to the backend to leave the game
-      fetch("/leavegame", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: 1,
-          gameNumber: gameNumber,
-        }),
-      })
-        .then((response) => {
-          if (response.status === 200) {
-            console.log("Left game successfully");
-            alert("You left the game");
-            navigate("/");
-          } else {
-            console.error("Not response 200");
-            throw new Error("Failed to leave game");
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+    // const handleBeforeUnload = (event) => {
+    //   // Perform actions before the component unloads
+    //   // Make a call to the backend to leave the game
+    //   fetch("/leavegame", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({
+    //       id: 1,
+    //       gameNumber: gameNumber,
+    //     }),
+    //   })
+    //     .then((response) => {
+    //       if (response.status === 200) {
+    //         console.log("Left game successfully");
+    //         alert("You left the game");
+    //         navigate("/");
+    //       } else {
+    //         console.error("Not response 200");
+    //         throw new Error("Failed to leave game");
+    //       }
+    //     })
+    //     .catch((error) => {
+    //       console.error(error);
+    //     });
 
 
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+    //   event.preventDefault();
+    //   event.returnValue = "";
+    // };
+    // window.addEventListener("beforeunload", handleBeforeUnload);
+    // return () => {
+    //   window.removeEventListener("beforeunload", handleBeforeUnload);
+    // };
   }, []);
 
   return (
