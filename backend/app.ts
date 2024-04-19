@@ -14,10 +14,27 @@ import multer, { MulterError } from 'multer';
 import fs from 'fs';
 
 import { ResCode, isResCode } from './error';
-import { fetch_monster } from './rds_actions';
+import { fetch_monster, fetch_player, new_egg, new_player } from './rds_actions';
 
+const expressJwt = require('express-jwt');
+import { Request as JWTRequest } from 'express-jwt';
+import jwksRsa from 'jwks-rsa';
 
-dotenv.config();
+const checkJwt = expressJwt({
+  secret: jwksRsa.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: 'https://pokidips.auth.us-east-1.amazoncognito.com/.well-known/jwks.json'
+  }),
+  audience: '6ke1tj0bnmg6ij6t6354lfs30q',
+  issuer: `https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ZyFvL3MUy`,
+  algorithms: ['RS256']
+});
+
+interface ReqWithUser extends Request {
+  auth?: JWTRequest['auth'];  // 'auth' will contain JWT claims if token is valid
+}
 
 const pool = mysql.createPool({
   connectionLimit: 10,
@@ -166,6 +183,60 @@ app.delete('/logout', (req: Request, res: Response) => {
   return res.status(ResCode.Ok).end();
 });
 
+////////////////////////////////////////////////////////////////////////////
+// This endpoint gets a user ID from AWS Cognito and attempts to retrieve a
+// player with the same ID from the RDS Database. If no such player exists,
+// then a new player with that ID is created.
+//
+// Various ResCodes are returned on failure.
+// The Player Data with either ResCode.LoginSuc or ResCode.SignUpSuc status
+// is returned on success.
+app.post('/new_user', checkJwt, async (req: ReqWithUser, res: Response) => {
+  const userId = req.auth?.sub;  
+  if (!userId) {
+    return res.status(ResCode.PIDUndef);
+  }
+
+  let p_id = parseInt(userId);
+
+  if (isNaN(p_id)) {
+    return res.status(ResCode.PIDNaN);
+  }
+
+  // Attempt to retrieve player object
+  let player: Player | ResCode = await fetch_player(p_id);
+
+  // Player was found
+  if (!isResCode(player)) {
+    // Put the player in the online dict
+    online[p_id] = player;
+
+    // Return Player Data
+    return res.status(ResCode.LoginSuc).json(player.get_data());
+  } else if (player === ResCode.RDSErr) {
+    // Player was not found because of an RDS error
+    // (This doesn't necessarily mean that the player DNE)
+    return res.status(ResCode.RDSErr).end();
+  }
+
+  // At this point the player did not exist, so we make a new one
+  player = new Player("", p_id, [], [], [], null, 1, 0);
+
+  // Adding the player to the DB
+  const code = await new_player(player)
+
+  // Insertion failed
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
+  }
+
+  // Put the player in the online dict
+  online[p_id] = player;
+
+  // Return Player Data
+  return res.status(ResCode.SignUpSuc).json(player.get_data());
+});
+
 
 ///////////////////////////////////////////////////////////
 // This endpoint takes a user ID and returns their username
@@ -256,7 +327,7 @@ app.get('/playerdata', (req: Request, res: Response) => {
 //    "id": PLAYER ID NUMBER,
 //    "m_id": MONSTER ID NUMBER,
 // }
-app.get('/monsterdata', (req: Request, res: Response) => {
+app.get('/monsterdata', async (req: Request, res: Response) => {
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
   }
@@ -279,7 +350,7 @@ app.get('/monsterdata', (req: Request, res: Response) => {
   }
 
   // Getting Monster
-  const monster: Monster | ResCode = fetch_monster(p_id, m_id);
+  const monster: Monster | ResCode = await fetch_monster(p_id, m_id);
 
   // Monster was not found
   if (isResCode(monster)) {
@@ -348,7 +419,7 @@ app.post('/joinrandom', (req: Request, res: Response) => {
 //
 // If a match with matching gameNumber exists then it
 // attempts to join, if not then it attempts to create it.
-app.post('/joingame', (req: Request, res: Response) => {
+app.post('/joingame', async (req: Request, res: Response) => {
   // Validating request body
   console.log(req.body);
   if (req.body === undefined) {
@@ -400,7 +471,7 @@ app.post('/joingame', (req: Request, res: Response) => {
   }
 
   // All other edge cases passed
-  match.join(player)
+  await match.join(player)
 
   return res.status(ResCode.Ok).json(match.get_data());
 });
@@ -414,13 +485,15 @@ app.post('/joingame', (req: Request, res: Response) => {
 //   "gameNumber": GAME NUMBER,
 //   "action": ACTION TYPE,
 //   "m_id": MONSTER ID (in case of a swap)
+//   "corr_ans": CORRECT ANSWER (1, 2, 3, 4)
+//   "chosen_ans": ANSWER CHOSEN BY PLAYER (1, 2, 3, 4)
 // }
 //
 // If the player is in a match, it leaves it, if not,
 // then nothing hapens. If there is conflicting backend
 // information, it gets corrected by leaving the game
 // automaticaly
-app.post('/action', (req: Request, res: Response) => {
+app.post('/action', async (req: Request, res: Response) => {
   // Validating request body
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
@@ -432,12 +505,18 @@ app.post('/action', (req: Request, res: Response) => {
     return res.status(code).end();
   }
 
+  // Validate answers
+  if (req.body.corr_ans === undefined || req.body.chosen_ans === undefined) {
+    return res.status(ResCode.AnsUndef).end();
+  } else if (typeof req.body.corr_ans === 'number' || typeof req.body.chosen_ans === 'number') {
+    return res.status(ResCode.AnsNaN).end();
+  }
+
   // Parse values
   const p_id: number = req.body.id;
   const gameNumber: number = req.body.gameNumber;
   const action: Action = req.body.action as Action;
   const m_id: number | null = (action === Action.SwapMonster)? req.body.m_id : null;
-
 
   // Get objects
   const match: Match | undefined = matches[gameNumber];
@@ -448,7 +527,7 @@ app.post('/action', (req: Request, res: Response) => {
   }
 
   // Take turn and record if the turn was successful
-  code = match.take_turn(p_id, action, m_id);
+  code = await match.take_turn(p_id, action, m_id, req.body.corr_ans, req.body.chosen_ans);
 
   // Return the code and the match data
   return res.status(code).json(match.get_data());

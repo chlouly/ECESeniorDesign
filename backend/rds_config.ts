@@ -50,6 +50,8 @@ async function setup_rds_tables() {
       name VARCHAR(50) NOT NULL,
       level INT NOT NULL,
       xp INT NOT NULL,
+      cur_egg INT,
+      cur_m_id INT
     );
 
     -- Create the Monsters table with a foreign key reference to the Users table
@@ -57,14 +59,19 @@ async function setup_rds_tables() {
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       user_id INT,
+      level INT,
+      xp INT,
+      ev_num INT,
+      type INT,
       FOREIGN KEY (user_id) REFERENCES Users(id)
     );
 
     -- Creating the Eggs table with foreign key reference to Users
     CREATE TABLE IF NOT EXISTS ${EGG_TABLE_NAME} (
       id SERIAL PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
       user_id INT,
+      type INT,
+      hatch_start_time INT,
       FOREIGN KEY (user_id) REFERENCES Users(id)
     );
 
@@ -78,6 +85,12 @@ async function setup_rds_tables() {
     ADD COLUMN bench INT[];
     ALTER TABLE Users
     ADD COLUMN eggs INT[];
+
+    -- Modifying user table to take id as an input while maintaining that it is a primary key
+    DROP SEQUENCE IF EXISTS ${USER_TABLE_NAME}_id_seq;
+    CREATE SEQUENCE ${USER_TABLE_NAME}_id_seq;
+    ALTER TABLE ${USER_TABLE_NAME} ALTER COLUMN id SET DEFAULT nextval('${USER_TABLE_NAME}_id_seq'::regclass);
+    ALTER TABLE ${USER_TABLE_NAME} ADD CONSTRAINT unique_id UNIQUE (id);
     `;
     await client.query(query);
     logger.debug(`Successfully created tables`);
@@ -92,5 +105,6 @@ export {
   setup_rds_tables,
   get_rds_connection,
   USER_TABLE_NAME,
-  MONSTER_TABLE_NAME
+  MONSTER_TABLE_NAME,
+  EGG_TABLE_NAME
 }

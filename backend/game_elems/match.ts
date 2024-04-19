@@ -29,7 +29,7 @@ class Match {
     }
 
     public is_full(): boolean { 
-        return (this.occupancy() >= 2) 
+        return (this.occupancy() >= MAX_OCCUPANCY) 
     }
 
     // Takes a player id and checks if that player is in the match
@@ -41,7 +41,7 @@ class Match {
         return this.to_move === id;
     }
 
-    public join(player: Player): boolean {
+    public async join(player: Player): Promise<boolean> {
         // Match is full
         if (this.is_full()) { return false; }
 
@@ -60,9 +60,11 @@ class Match {
         } else { return false }
 
         if (player.current_monster === null) {
-            const monster = fetch_monster(player.get_id(), player.monsters_roster[0]);
-            if (!isResCode(monster)) {
-                player.current_monster = monster;
+            if (player.monsters_roster[0] !== undefined) {
+                const monster = await fetch_monster(player.get_id(), player.monsters_roster[0]);
+                if (!isResCode(monster)) {
+                    player.current_monster = monster;
+                }
             }
         }
 
@@ -100,7 +102,7 @@ class Match {
     }
 
     // Currently does nothing. Soon will make the game execute 1 turn
-    public take_turn(id: number, action: Action, m_id: number | null): ResCode {
+    public async take_turn(id: number, action: Action, m_id: number | null, corr_ans: number, chosen_ans: number): Promise<ResCode> {
         // You're not playing
         if (!this.is_in_match(id)) {
             return ResCode.NotFound;
@@ -111,18 +113,19 @@ class Match {
             return ResCode.NotYourTurn;
         }
 
-        // TODO
-        // ANSWER SAT QUESTION
+        if (corr_ans !== chosen_ans) {
+            return ResCode.Incorrect;
+        }
 
         // Perform the action
-        let code: ResCode = this.players[id].perform_action(this.players[this.next_to_move], action, m_id);
+        let code: ResCode = await this.players[id].perform_action(this.players[this.next_to_move], action, m_id);
 
         // If the turn was successful, go to the next one
         if (code === ResCode.Ok) {
             this.next_turn();
         }
 
-        return code;
+        return ResCode.Correct;
     }
 
     public async wait_to_move(id: number): Promise<ResCode> {
