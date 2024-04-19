@@ -19,20 +19,15 @@ import { fetch_monster, fetch_player, new_egg, new_player } from './rds_actions'
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
 
+import { CognitoJwtVerifier } from "aws-jwt-verify";
+
 dotenv.config();
 
-interface CognitoPublicKey {
-  alg: string;
-  e: string;
-  kid: string;
-  kty: string;
-  n: string;
-  use: string;
-}
-
-interface CognitoJwks {
-  keys: CognitoPublicKey[];
-}
+const verifier = CognitoJwtVerifier.create({
+  userPoolId: 'us-east-1_ZyFvL3MUy',
+  tokenUse : 'access',
+  clientId: '6ke1tj0bnmg6ij6t6354lfs30q',
+});
 
 interface DecodedToken {
   sub: string; // Cognito uses 'sub' as the user ID
@@ -46,14 +41,6 @@ const pool = mysql.createPool({
   password: process.env.MYSQL_PASSWORD,
   database: 'mydatabase'
 });
-
-// connection.connect((err: mysql.MysqlError) => {
-//   if (err) {
-//     logger.error('Error connecting to MySQL:', err);
-//   } else {
-//     logger.info('Connected to MySQL');
-//   }
-// });
 
 setup_rds_tables();
 
@@ -107,49 +94,26 @@ export const storage_pdf = multer.diskStorage({
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
-const cognitoIssuer = `https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ZyFvL3MUy`;
-const jwksUri = `${cognitoIssuer}/.well-known/jwks.json`;
-
-const getPublicKey = async (kid: string): Promise<string | null> => {
-    try {
-        const jwks = await axios.get<CognitoJwks>(jwksUri);
-        const key = jwks.data.keys.find(k => k.kid === kid);
-        if (!key) return null;
-        return `-----BEGIN PUBLIC KEY-----\n${key.n}\n-----END PUBLIC KEY-----`;
-    } catch (error) {
-        console.error('Error fetching public keys:', error);
-        return null;
-    }
-};
-
 const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
-    const { authorization } = req.headers;
-    if (!authorization) return res.status(401).send('Authorization token is required');
+  const { authorization } = req.headers;
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return res.status(401).send('Authorization header must be provided and must start with Bearer');
+  }
 
-    const token = authorization.split(' ')[1]; // Assuming "Bearer" token
-    if (!token) return res.status(401).send('Token not provided');
-
-    const { kid } = jwt.decode(token, { complete: true })?.header ?? {};
-    if (!kid) return res.status(401).send('Invalid token');
-
-    const publicKey = await getPublicKey(kid);
-    if (!publicKey) return res.status(401).send('Failed to retrieve public key');
-
-    jwt.verify(token, publicKey, {
-        algorithms: ['RS256'],
-        issuer: cognitoIssuer,
-        audience: '6ke1tj0bnmg6ij6t6354lfs30q', // Your Cognito App client ID for access_token
-    }, (err, decoded) => {
-        if (err) return res.status(401).send(`JWT token verification failed: ${err.message}`);
-        (req as any).user = decoded
-        next();
-    });
+  const token = authorization.split(' ')[1];
+  try {
+    const payload = await verifier.verify(token); // Verifies the token
+    console.log("Token is valid. Payload:", payload);
+    (req as any).user = payload; // Store payload in request
+    next(); // Proceed to next middleware or route handler
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    res.status(401).send("Token not valid!");
+  }
 };
-// use environment for path
 
 app.use(express.static(process.env.PUBLIC_PATH || "/home/ec2-user/OSS/front-end/build"));
 app.use(express.json());
-// app.use(validateJwt);
 
 const upload = multer({ 
   storage: storage_pdf,
@@ -233,19 +197,11 @@ app.delete('/logout', (req: Request, res: Response) => {
 app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
   const user = (req as any).user as DecodedToken; // Use type assertion here
   if (user) {
-      res.send(`You have accessed a protected route. Your user ID is: ${user.sub}`);
+      res.status(200).send({ user_id: user.sub });
   } else {
       res.status(401).send('No user information available');
   }
 });
-// app.post('/new_user', async (req: RequestWithUser, res: Response) => {
-//   if (req.user) {
-//       res.send(`You have accessed a protected route. Your user ID is: ${req.user.sub}`);
-//   } else {
-//       res.status(401).send('No user information available');
-//   }
-
-
 //   let p_id = parseInt(userId);
 
 //   if (isNaN(p_id)) {
