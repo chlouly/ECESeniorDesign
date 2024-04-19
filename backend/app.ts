@@ -403,6 +403,8 @@ app.post('/joingame', async (req: Request, res: Response) => {
 //   "gameNumber": GAME NUMBER,
 //   "action": ACTION TYPE,
 //   "m_id": MONSTER ID (in case of a swap)
+//   "corr_ans": CORRECT ANSWER (1, 2, 3, 4)
+//   "chosen_ans": ANSWER CHOSEN BY PLAYER (1, 2, 3, 4)
 // }
 //
 // If the player is in a match, it leaves it, if not,
@@ -421,12 +423,18 @@ app.post('/action', async (req: Request, res: Response) => {
     return res.status(code).end();
   }
 
+  // Validate answers
+  if (req.body.corr_ans === undefined || req.body.chosen_ans === undefined) {
+    return res.status(ResCode.AnsUndef).end();
+  } else if (typeof req.body.corr_ans === 'number' || typeof req.body.chosen_ans === 'number') {
+    return res.status(ResCode.AnsNaN).end();
+  }
+
   // Parse values
   const p_id: number = req.body.id;
   const gameNumber: number = req.body.gameNumber;
   const action: Action = req.body.action as Action;
   const m_id: number | null = (action === Action.SwapMonster)? req.body.m_id : null;
-
 
   // Get objects
   const match: Match | undefined = matches[gameNumber];
@@ -437,7 +445,7 @@ app.post('/action', async (req: Request, res: Response) => {
   }
 
   // Take turn and record if the turn was successful
-  code = await match.take_turn(p_id, action, m_id);
+  code = await match.take_turn(p_id, action, m_id, req.body.corr_ans, req.body.chosen_ans);
 
   // Return the code and the match data
   return res.status(code).json(match.get_data());

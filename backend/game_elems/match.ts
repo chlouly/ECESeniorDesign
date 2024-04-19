@@ -29,7 +29,7 @@ class Match {
     }
 
     public is_full(): boolean { 
-        return (this.occupancy() >= 2) 
+        return (this.occupancy() >= MAX_OCCUPANCY) 
     }
 
     // Takes a player id and checks if that player is in the match
@@ -102,7 +102,7 @@ class Match {
     }
 
     // Currently does nothing. Soon will make the game execute 1 turn
-    public async take_turn(id: number, action: Action, m_id: number | null): Promise<ResCode> {
+    public async take_turn(id: number, action: Action, m_id: number | null, corr_ans: number, chosen_ans: number): Promise<ResCode> {
         // You're not playing
         if (!this.is_in_match(id)) {
             return ResCode.NotFound;
@@ -113,8 +113,9 @@ class Match {
             return ResCode.NotYourTurn;
         }
 
-        // TODO
-        // ANSWER SAT QUESTION
+        if (corr_ans !== chosen_ans) {
+            return ResCode.Incorrect;
+        }
 
         // Perform the action
         let code: ResCode = await this.players[id].perform_action(this.players[this.next_to_move], action, m_id);
@@ -124,7 +125,7 @@ class Match {
             this.next_turn();
         }
 
-        return code;
+        return ResCode.Correct;
     }
 
     public async wait_to_move(id: number): Promise<ResCode> {

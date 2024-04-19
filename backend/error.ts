@@ -10,6 +10,10 @@ export enum ResCode {
     LoginSuc = 211,             // Successful Player Login
     SignUpSuc = 212,            // Successful in signing up
 
+    // Answers (returned in the /action endpoint)
+    Correct = 220,              // The provided answer was correct and the endpoint returned successfully
+    Incorrect = 221,            // The provided answer was incorrect and the endpoint returned successfully
+
 
     /* --- NEGATIVE --- */
     // General
@@ -41,6 +45,10 @@ export enum ResCode {
     NotYourTurn = 554,          // Not your turn to move
     WaitTimeout = 555,          // Took too long to become your turn, try again
     NotInMatch = 556,           // The desired player is not in this match
+
+    // 560s are to do with answers
+    AnsUndef = 560,             // Either the chosen or correct ansers were undefined
+    AnsNaN = 561,               // Either the chosen or correct ansers were not numbers
 
     // RDS Errors
     RDSErr = 600,
