@@ -149,7 +149,7 @@ const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
 
 app.use(express.static(process.env.PUBLIC_PATH || "/home/ec2-user/OSS/front-end/build"));
 app.use(express.json());
-app.use(validateJwt);
+// app.use(validateJwt);
 
 const upload = multer({ 
   storage: storage_pdf,
@@ -229,14 +229,14 @@ app.delete('/logout', (req: Request, res: Response) => {
 // The Player Data with either ResCode.LoginSuc or ResCode.SignUpSuc status
 // is returned on success.
 
-app.post('/new_user', async (req: Request, res: Response) => {
-  const user = (req as any).user as DecodedToken; // Use type assertion here
-  if (user) {
-      res.send(`You have accessed a protected route. Your user ID is: ${user.sub}`);
-  } else {
-      res.status(401).send('No user information available');
-  }
-});
+// app.post('/new_user', async (req: Request, res: Response) => {
+//   const user = (req as any).user as DecodedToken; // Use type assertion here
+//   if (user) {
+//       res.send(`You have accessed a protected route. Your user ID is: ${user.sub}`);
+//   } else {
+//       res.status(401).send('No user information available');
+//   }
+// });
 // app.post('/new_user', async (req: RequestWithUser, res: Response) => {
 //   if (req.user) {
 //       res.send(`You have accessed a protected route. Your user ID is: ${req.user.sub}`);
