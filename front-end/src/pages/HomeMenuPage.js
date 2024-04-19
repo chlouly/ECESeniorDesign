@@ -2,6 +2,9 @@ import React, { useEffect } from "react";
 import { FiPlayCircle, FiUsers, FiSettings } from "react-icons/fi";
 import { Link } from "react-router-dom";
 const HomeMenu = () => {
+
+  const access_token = localStorage.getItem("access_token");
+
   const handleLogout = () => {
     // Clear local authentication state
     localStorage.removeItem("id_token");
@@ -34,7 +37,7 @@ const HomeMenu = () => {
 
   useEffect(() => {
     handleNewUser();
-  }, []);
+  }, [access_token]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-blue-100">

@@ -8,6 +8,7 @@ const CallbackPage = () => {
 
     useEffect(() => {
         const code = new URLSearchParams(window.location.search).get('code');
+        console.log('Code:', code);
         if (code) {
             exchangeCodeForTokens(code);
         }
@@ -15,6 +16,7 @@ const CallbackPage = () => {
 
     const exchangeCodeForTokens = async (code) => {
         try {
+            console.log('Exchanging code for tokens...');
             const response = await axios.post('https://pokidips.auth.us-east-1.amazoncognito.com/oauth2/token', new URLSearchParams({
                 grant_type: 'authorization_code',
                 client_id: "6ke1tj0bnmg6ij6t6354lfs30q",
