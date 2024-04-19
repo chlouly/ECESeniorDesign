@@ -10,6 +10,8 @@ import path = require('path');
 
 import mysql from 'mysql';
 import e = require('express');
+import multer, { MulterError } from 'multer';
+import fs from 'fs';
 
 import { ResCode, isResCode } from './error';
 import { fetch_monster, fetch_player, new_egg, new_player } from './rds_actions';
@@ -34,22 +36,32 @@ interface ReqWithUser extends Request {
   auth?: JWTRequest['auth'];  // 'auth' will contain JWT claims if token is valid
 }
 
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
+  connectionLimit: 10,
   host: 'localhost',
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
   database: 'mydatabase'
 });
 
-connection.connect((err: mysql.MysqlError) => {
-  if (err) {
-    logger.error('Error connecting to MySQL:', err);
-  } else {
-    logger.info('Connected to MySQL');
-  }
-});
+// connection.connect((err: mysql.MysqlError) => {
+//   if (err) {
+//     logger.error('Error connecting to MySQL:', err);
+//   } else {
+//     logger.info('Connected to MySQL');
+//   }
+// });
 
 setup_rds_tables();
+
+// uploaf file using multer
+declare global {
+  namespace Express {
+    interface Request {
+      fileValidationError?: string;
+    }
+  }
+}
 
 /////////////////////////////////////////
 // Dictionaries and lists to manage state
@@ -76,13 +88,61 @@ let santi: Player = new Player("Santi", 3, [], [], [], null, 2, 0);
 online[santi.get_id()] = santi;
 
 
+//create storage using multer 
+export const storage_pdf = multer.diskStorage({
+  destination: (req, file, callback) => {
+    const uploadDir = path.join(__dirname, 'Uploaded_Files');
+    fs.mkdirSync(uploadDir, { recursive: true });
+    callback(null, uploadDir);
+  },
+  filename: (req, file, callback) => {
+    callback(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+  },
+});
+
+
+
+
+
 
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
-app.use(express.static(path.join(__dirname, '../front-end/build')));
+// use environment for path
+
+app.use(express.static(process.env.PUBLIC_PATH || "/home/ec2-user/OSS/front-end/build"));
 app.use(express.json());
 
+
+const upload = multer({ 
+  storage: storage_pdf,
+  fileFilter: (req, file, cb) => {
+    if (path.extname(file.originalname) !== '.pdf') {
+      req.fileValidationError = 'Only PDF files are allowed!';
+      cb(null, false); // Reject the file. Don't pass an Error here.
+      return;
+    }
+    cb(null, true);
+  },
+  limits: {
+    fileSize: 20 * 1024 * 1024 // 20 MB
+  }
+});
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (req.fileValidationError) {
+    return res.status(400).json({ message: req.fileValidationError });
+  }
+  
+  if (!req.file) {
+    return res.status(400).json({ message: 'Please upload a file.' });
+  }
+
+  return res.status(200).json({
+    message: 'File uploaded successfully',
+    filename: req.file.filename,
+  });
+});
 
 //////////////////////////////////////////////////////////
 // Lets a player save ther progress and logout
@@ -301,6 +361,24 @@ app.get('/monsterdata', async (req: Request, res: Response) => {
   return res.status(ResCode.Ok).json(monster.get_data());
 });
 
+app.get('/create_account', (req: Request, res: Response) => {
+  // cognito
+
+  // Player instance
+
+  //  to create one.
+
+});
+
+app.get('/login', (req: Request, res: Response) => {
+  // cognito
+
+  // Player instance
+
+  //  check if player is already online
+
+});
+
 
 //////////////////////////////////////////////////////////
 // Lets a player join a random match
@@ -343,18 +421,22 @@ app.post('/joinrandom', (req: Request, res: Response) => {
 // attempts to join, if not then it attempts to create it.
 app.post('/joingame', async (req: Request, res: Response) => {
   // Validating request body
+  console.log(req.body);
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
   }
   
   let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber, null, null);
+  console.log(code);
   if (code !== ResCode.Ok) {
+    console.log("ERROR");
     return res.status(code).end();
   }
 
   // Parsing player request data
   const id: number = req.body.id;
   const player: Player | undefined = online[id];
+  console.log(player);
 
   // Player is not online
   if (player === undefined) {
@@ -568,19 +650,44 @@ app.get('/getstate', (req: Request, res: Response) => {
 
 // Returns a random paragraph from the database
 app.get('/randomparagraph', (req, res) => {
-  const query = 'SELECT * FROM mytable ORDER BY RAND() LIMIT 1';
+  const query = 'SELECT passage, question, choice_A, choice_B, choice_C, choice_D FROM mytable ORDER BY RAND() LIMIT 1';
 
-  connection.query(query, (error: any, results: any) => {
+  pool.query(query, (error, results) => {
       if (error) {
-          res.status(500).send({ error: 'Error fetching random row' });
+          console.error('Error fetching random row:', error);
+          res.status(500).send({ error: 'Error fetching random row', details: error });
+      } else if (results.length > 0) {
+          const row = results[0];
+          res.status(200).send({
+              paragraph: row.passage,
+              question: {
+                text: row.question,
+                options: [
+                  "A) " + row.choice_A,
+                  "B) " + row.choice_B,
+                  "C) " + row.choice_C,
+                  "D) " + row.choice_D
+                ]
+              }
+          });
       } else {
-          res.status(ResCode.Ok).send(results[0]);
+          res.status(404).send({ error: 'No data found' });
       }
   });
 });
 
+// logg all requests
+app.use((req: Request, res: Response, next: NextFunction) => {
+  logger.info(`${req.method} ${req.path}`);
+  next();
+});
+
 app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../../front-end/build/index.html'));
+  if (process.env.PUBLIC_PATH === undefined) {
+    res.sendFile("/home/ec2-user/OSS/front-end/build/index.html");
+  } else {
+    res.sendFile(process.env.PUBLIC_PATH + '/index.html');
+  }
 });
 
 app.listen(port, () => {

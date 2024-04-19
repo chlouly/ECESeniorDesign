@@ -17,7 +17,7 @@ jobs:
         with:
           SSH_PRIVATE_KEY: ${{ secrets.Senior_Design_deploy_key }}
           SOURCE: "./"
-          REMOTE_HOST: "ec2-54-234-11-175.compute-1.amazonaws.com"
+          REMOTE_HOST: "ec2-107-20-33-135.compute-1.amazonaws.com"
           REMOTE_USER: "ec2-user"
           TARGET: "/home/ec2-user/OSS"
 
@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
           chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-54-234-11-175.compute-1.amazonaws.com '
+          ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-107-20-33-135.compute-1.amazonaws.com '
             cd /home/ec2-user/OSS/backend &&
             ./redeploy &&
             echo "Rebuild script executed successfully"
@@ -46,7 +46,7 @@ jobs:
         run: |
           echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
           chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-54-234-11-175.compute-1.amazonaws.com '
+          ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-107-20-33-135.compute-1.amazonaws.com '
             cd /home/ec2-user/OSS/front-end &&
             npm install &&
             npm run build &&
@@ -63,7 +63,7 @@ jobs:
           echo "Server started (placeholder echo command)"
           # In the future, replace the line above with the actual command to start the server
           # For example:
-          # ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-54-234-11-175.compute-1.amazonaws.com '
+          # ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-107-20-33-135.compute-1.amazonaws.com '
           #   cd /home/ec2-user/OSS &&
           #   echo "Server started successfully"
           # '
