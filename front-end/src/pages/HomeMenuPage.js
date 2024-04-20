@@ -1,7 +1,9 @@
 import React, { useEffect } from "react";
 import { FiPlayCircle, FiUsers, FiSettings } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 const HomeMenu = () => {
+  const navigate = useNavigate();
   const handleNewUser = async () => {
     const access_token = localStorage.getItem("access_token");
     try {
@@ -17,6 +19,11 @@ const HomeMenu = () => {
     }
     catch (error) {
       console.error("Error fetching data:", error);
+      // remove tokens and redirect to login
+      localStorage.removeItem("id_token");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("isAuthenticated");
+      navigate("/login");
     }
   }
 

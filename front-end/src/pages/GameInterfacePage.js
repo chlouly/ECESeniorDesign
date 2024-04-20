@@ -157,19 +157,19 @@ function GameInterface() {
       setNextToMove(nextToMove);
       console.log("Next to Move:", next_to_move);
 
-      // Uncomment and modify this section as needed.
-      // if (localStorage.getItem('paragraph_data')) {
-      //   const data = JSON.parse(localStorage.getItem('paragraph_data'));
-      //   setParagraphData({
-      //     paragraph: data.paragraph,
-      //     question: {
-      //       text: data.question.text,
-      //       options: data.question.options,
-      //     },
-      //   });
-      // } else {
-      //   getNewParagraph();
-      // }
+
+      if (localStorage.getItem('paragraph_data')) {
+        const data = JSON.parse(localStorage.getItem('paragraph_data'));
+        setParagraphData({
+          paragraph: data.paragraph,
+          question: {
+            text: data.question.text,
+            options: data.question.options,
+          },
+        });
+      } else {
+        getNewParagraph();
+      }
 
       handleWaitForOtherPlayer();
     } catch (error) {
