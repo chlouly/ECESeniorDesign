@@ -110,19 +110,14 @@ function GameInterface() {
     }, 15000);
   };
   const handleWaitForOtherPlayer = () => {
-    const controller = new AbortController(); // Create a new instance of AbortController
-    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000); // Set timeout for 5 minutes
-
     fetch("/waittomove", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ id: 1, gameNumber: gameNumber }),
-      signal: controller.signal, // Pass the signal to fetch
     })
       .then((response) => {
-        clearTimeout(timeoutId); // Clear the timeout if the fetch completes in time
         if (response.status === 200) {
           return response.json();
         } else {

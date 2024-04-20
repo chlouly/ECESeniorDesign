@@ -7,7 +7,7 @@ import Settings from './pages/SettingsPage';
 import JoinGamePage from './pages/JoinGamePage';
 import StartGamePage from './pages/StartGamePage';
 import PdfUploadPage from './pages/PdfUploadPage'; 
-
+import ChooseTeamPage from './pages/ChooseTeamPage';
 import CallbackPage from './pages/CallBackPage';
 
 import { Navigate } from 'react-router-dom';
@@ -39,6 +39,7 @@ const AppRouter = () => {
             <Routes>
                 <Route path="/" element={<PrivateRoute><HomeMenu /></PrivateRoute>} />
                 {/* <Route path="/game" element={<PrivateRoute><GameInterface /></PrivateRoute>} /> */}
+                <Route path="choose" element={<PrivateRoute><ChooseTeamPage /></PrivateRoute>} />
                 <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
                 <Route path="/join" element={<PrivateRoute><JoinGamePage /></PrivateRoute>} />
                 <Route path="/start" element={<PrivateRoute><StartGamePage /></PrivateRoute>} />
