@@ -182,15 +182,17 @@ function GameInterface() {
       className="bg-cover h-screen grid grid-rows-3 grid-flow-col grid grid-cols-3 grid_flow_col gap-4 p-4"
       style={{ backgroundImage: `url(${battle_arena}), height: 100vh` }}
     >
-      <div className="row-span-2 bg-blue-100 rounded-lg shadow p-4">
-        <p className="text-blue-800 font-semibold">{paragraphData.paragraph}</p>
-      </div>
+      <div className="row-span-3 bg-blue-100 rounded-lg shadow p-4">
+        <p className="text-blue-800 font-semibold">Paragraph:</p>
+        <p className="text-blue-800 font-semibold mt-4"> {paragraphData.paragraph}</p>
+      {/* </div> */}
 
-      <div className="bg-blue-100 rounded-lg shadow p-4 mt-4">
-        <p className="text-blue-800 font-semibold overflow-y-auto">
+      {/* <div className="row-span-2 bg-blue-100 rounded-lg shadow p-4 mt-4"> */}
+        <p className="text-blue-800 font-semibold mt-4">Question:</p>
+        <p className="text-blue-800 font-semibold mt-4">
           {paragraphData.question.text}
         </p>
-        <div className="text-blue-700 flex flex-col mt-2 space-y-2 overflow-y-auto">
+        <div className="text-blue-700 flex flex-col mt-4 space-y-2 overflow-y-auto">
           {paragraphData.question.options?.map((option, index) => (
             <button
               key={index}
