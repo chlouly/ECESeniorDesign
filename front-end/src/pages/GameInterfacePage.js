@@ -157,9 +157,8 @@ function GameInterface() {
       setNextToMove(nextToMove);
       console.log("Next to Move:", next_to_move);
 
-
-      if (localStorage.getItem('paragraph_data')) {
-        const data = JSON.parse(localStorage.getItem('paragraph_data'));
+      if (localStorage.getItem("paragraph_data")) {
+        const data = JSON.parse(localStorage.getItem("paragraph_data"));
         setParagraphData({
           paragraph: data.paragraph,
           question: {
@@ -182,30 +181,37 @@ function GameInterface() {
       className="bg-cover h-screen grid grid-rows-3 grid-flow-col grid grid-cols-3 grid_flow_col gap-4 p-4"
       style={{ backgroundImage: `url(${battle_arena}), height: 100vh` }}
     >
-      <div className="row-span-3 bg-blue-100 rounded-lg shadow p-4">
-        <p className="text-blue-800 font-semibold">Paragraph:</p>
-        <p className="text-blue-800 font-semibold mt-4"> {paragraphData.paragraph}</p>
-      {/* </div> */}
-
-      {/* <div className="row-span-2 bg-blue-100 rounded-lg shadow p-4 mt-4"> */}
-        <p className="text-blue-800 font-semibold mt-4">Question:</p>
-        <p className="text-blue-800 font-semibold mt-4">
-          {paragraphData.question.text}
-        </p>
-        <div className="text-blue-700 flex flex-col mt-4 space-y-2 overflow-y-auto">
-          {paragraphData.question.options?.map((option, index) => (
-            <button
-              key={index}
-              className="px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white text-md"
-            >
-              {option}
-            </button>
-          ))}
+      <div className="bg-blue-100 rounded-lg shadow p-4 flex flex-col h-screen">
+        <div className="flex-1 overflow-y-auto p-4">
+          <p className="text-blue-800 font-semibold text-left text-xl">
+            Paragraph:
+          </p>
+          <p className="text-blue-800 font-normal mt-4 text-left whitespace-pre-line">
+            {paragraphData.paragraph}
+          </p>
+        </div>
+        <div className="divider"></div> {/* This is the divider line */}
+        <div className="flex-1 overflow-y-auto p-4">
+          <p className="text-blue-800 font-semibold text-left text-xl">
+            Question:
+          </p>
+          <p className="text-blue-800 font-normal mt-4 text-left">
+            {paragraphData.question.text}
+          </p>
+          <div className="text-blue-700 flex flex-col mt-4 space-y-2 text-left">
+            {paragraphData.question.options?.map((option, index) => (
+              <button
+                key={index}
+                className="px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white text-md text-left"
+              >
+                {option}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-
+      );
       {/* Monster 1 Section */}
-
       <div className="flex col-span-1 row-span-2 flex-col items-center justify-center">
         <img
           src={monster1}
@@ -225,9 +231,7 @@ function GameInterface() {
           )}
         </div>
       </div>
-
       {/* MENU */}
-
       <div className="col-span-2 bg-blue-100 rounded-lg shadow p-4 mt-4 relative">
         <p className="text-blue-800 font-semibold mb-2">Choose an action:</p>
         <div className=" items-center space-x-4">
@@ -268,16 +272,15 @@ function GameInterface() {
                   </>
                 )}
               </div>
-            ) 
-            )) : (
-              <div className="flex flex-col items-center space-y-2">
-                <ClipLoader color={"#000"} loading={true} size={50} />
-                <p className="text-blue-700">Loading Monsters...</p>
-              </div>
-            )}
+            ))
+          ) : (
+            <div className="flex flex-col items-center space-y-2">
+              <ClipLoader color={"#000"} loading={true} size={50} />
+              <p className="text-blue-700">Loading Monsters...</p>
+            </div>
+          )}
         </div>
 
-        
         <div className="absolute bottom-0 right-0 bg-white p-4 rounded-lg shadow space-y-4">
           <p className="text-gray-800 font-semibold">
             Game Number: {gameNumber}
@@ -290,7 +293,6 @@ function GameInterface() {
           </button>
         </div>
       </div>
-
       <div className="flex flex-col col-span-1 row-span-2 items-center justify-center">
         {players.length > 1 ? (
           <>
