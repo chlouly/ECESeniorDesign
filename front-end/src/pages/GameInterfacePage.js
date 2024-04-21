@@ -210,7 +210,7 @@ function GameInterface() {
           </div>
         </div>
       </div>
-      );
+      
       {/* Monster 1 Section */}
       <div className="flex col-span-1 row-span-2 flex-col items-center justify-center">
         <img
