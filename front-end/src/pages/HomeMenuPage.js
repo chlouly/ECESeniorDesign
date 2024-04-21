@@ -16,8 +16,8 @@ const HomeMenu = () => {
       });
       const data = await response.json();
       console.log(data);
-    }
-    catch (error) {
+      localStorage.setItem("user_id", data.user_id);
+    } catch (error) {
       console.error("Error fetching data:", error);
       // remove tokens and redirect to login
       localStorage.removeItem("id_token");
@@ -25,21 +25,39 @@ const HomeMenu = () => {
       localStorage.removeItem("isAuthenticated");
       navigate("/login");
     }
-  }
+  };
 
   useEffect(() => {
     handleNewUser();
   }, []);
 
   const handleLogout = () => {
+    const access_token = localStorage.getItem("access_token");
+
+    try {
+      const response = fetch("/logout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      console.log(response);
+      if (response === 200) {
+        console.log("Logged out");
+      } else {
+        console.error("Failed to log out");
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
     // Clear local authentication state
     localStorage.removeItem("id_token");
     localStorage.removeItem("access_token");
     localStorage.removeItem("isAuthenticated");
-    // Redirect to Cognito logout URL
+
     window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/login&redirect_uri=https%3A%2F%2Fpokidips.games/login`;
   };
-
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-blue-100">
