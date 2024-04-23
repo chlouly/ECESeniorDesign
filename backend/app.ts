@@ -92,24 +92,6 @@ export const storage_pdf = multer.diskStorage({
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
-const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
-  const { authorization } = req.headers;
-  if (!authorization || !authorization.startsWith('Bearer ')) {
-    return res.status(401).send('Authorization header must be provided and must start with Bearer');
-  }
-
-  const token = authorization.split(' ')[1];
-  try {
-    const payload = await verifier.verify(token); // Verifies the token
-    console.log("Token is valid. Payload:", payload);
-    (req as any).user = payload; // Store payload in request
-    next(); // Proceed to next middleware or route handler
-  } catch (err) {
-    console.error("Token verification failed:", err);
-    res.status(401).send("Token not valid!");
-  }
-};
-
 app.use(express.static(process.env.PUBLIC_PATH || "/home/ec2-user/OSS/front-end/build"));
 app.use(express.json());
 
@@ -196,23 +178,29 @@ app.delete('/logout', validateJwt, (req: Request, res: Response) => {
 app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
   const user = (req as any).user as DecodedToken;
   const userId = user.sub;
+  console.log(userId);
   if (!userId) {
     return res.status(ResCode.PIDUndef);
   }
 
   // Attempt to retrieve player object
   let player: Player | ResCode = await fetch_player(userId);
+  console.log(player);
 
   // Player was found
   if (!isResCode(player)) {
     // Put the player in the online dict
     online[player.get_id()] = player;
 
+    console.log(player.get_data());
+    
+
     // Return Player Data
     return res.status(ResCode.LoginSuc).json(player.get_data());
   } else if (player === ResCode.RDSErr) {
     // Player was not found because of an RDS error
     // (This doesn't necessarily mean that the player DNE)
+    console.log("RDS ERROR");
     return res.status(ResCode.RDSErr).end();
   }
 
@@ -221,9 +209,12 @@ app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
 
   // Giving the player a starter monster
   player.new_monster("");
+  console.log(player);
 
   // Adding the player to the DB
   const code = await new_player(player, userId)
+
+  console.log(code);
 
   // Insertion failed
   if (code !== ResCode.Ok) {
