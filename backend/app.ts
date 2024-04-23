@@ -302,7 +302,7 @@ app.get('/difficulty', (req: Request, res: Response) => {
 // body: {
 //    "id": PLAYER ID NUMBER,
 // }
-app.get('/playerdata', (req: Request, res: Response) => {
+app.post('/playerdata', (req: Request, res: Response) => {
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
   }
