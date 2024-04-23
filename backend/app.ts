@@ -88,25 +88,6 @@ export const storage_pdf = multer.diskStorage({
 
 
 
-const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
-  const { authorization } = req.headers;
-  if (!authorization || !authorization.startsWith('Bearer ')) {
-    return res.status(401).send('Authorization header must be provided and must start with Bearer');
-  }
-
-  const token = authorization.split(' ')[1];
-  try {
-    const payload = await verifier.verify(token); // Verifies the token
-    console.log("Token is valid. Payload:", payload);
-    (req as any).user = payload; // Store payload in request
-    next(); // Proceed to next middleware or route handler
-  } catch (err) {
-    console.error("Token verification failed:", err);
-    res.status(401).send("Token not valid!");
-  }
-};
-
-
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
@@ -233,6 +214,9 @@ app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
 
   // At this point the player did not exist, so we make a new one
   player = new Player("", -1, [], [], [], null, 1, 0);
+
+  // Giving the player a starter monster
+  player.new_monster("");
 
   // Adding the player to the DB
   const code = await new_player(player, userId)
