@@ -27,11 +27,12 @@ function GameInterface() {
   });
   const [playerIndex, setPlayerIndex] = useState(null);
   const [otherPlayerIndex, setOtherPlayerIndex] = useState(null);
+  const [chosenAnswer, setChosenAnswer] = useState(null);
   const navigate = useNavigate();
   const [actions, setActions] = useState([
-    { name: "Attack" },
-    { name: "Heal" },
-    { name: "Swap" },
+    { name: "Attack", api_name: 0 },
+    { name: "Heal", api_name: 1 },
+    { name: "Swap", api_name: 2 },
   ]);
   const [paragraphData, setParagraphData] = useState({
     paragraph: "",
@@ -39,6 +40,7 @@ function GameInterface() {
       text: "",
       options: [],
     },
+    correct_answer: "",
   });
 
   const handleLeaveGame = () => {
@@ -51,11 +53,12 @@ function GameInterface() {
       },
       body: JSON.stringify({
         id: user_ID,
-        gameNumber: gameNumber,
+        gameNumber: parseInt(gameNumber),
       }),
     })
       .then((response) => {
         if (response.status === 200) {
+          localStorage.removeItem("paragraph_data");
           navigate("/");
         } else {
           console.error("Not response 200");
@@ -82,6 +85,7 @@ function GameInterface() {
               text: data.question.text,
               options: data.question.options,
             },
+            correct_answer: data.question.correct_answer,
           });
         }
       })
@@ -90,9 +94,10 @@ function GameInterface() {
       });
   };
 
-  const handleActionClick = (action) => {
+  const handleActionClick = (action, m_id) => {
     let user_ID = localStorage.getItem("user_id");
     user_ID = parseInt(user_ID, 10);
+    console.log(paragraphData)
     fetch("/action", {
       method: "POST",
       headers: {
@@ -100,15 +105,24 @@ function GameInterface() {
       },
       body: JSON.stringify({
         id: user_ID,
-        gameNumber: gameNumber,
+        gameNumber: parseInt(gameNumber),
         action: action,
-        m_id: 1,
+        m_id: m_id,
+        corr_ans: paragraphData.correct_answer,
+        chosen_ans: chosenAnswer
       }),
     })
       .then((response) => {
-        if (response.status === 200) {
+        if (response.status === 220) {
+          setChosenAnswer(null);
           return response.json();
-        } else {
+        }else if (response.status === 221) {
+          setChosenAnswer(null);
+          alert("Wrong Answer!");
+          return response.json();
+        }
+        
+        else {
           console.error("Not response 200");
           throw new Error("Failed to perform action");
         }
@@ -116,16 +130,23 @@ function GameInterface() {
       .then((data) => {
         console.log("Action performed successfully");
         console.log(data);
+        setPlayers(data.players);
+        localStorage.setItem("players", JSON.stringify(data.players));
+        setToMove(data.to_move);
+        localStorage.setItem("to_move", data.to_move);
+        setNextToMove(data.next_to_move);
+        localStorage.setItem("next_to_move", data.next_to_move);
         localStorage.removeItem("paragraph_data");
         getNewParagraph();
+        handleWaitForOtherPlayer();
       })
       .catch((error) => {
         alert(error);
         console.error(error);
       });
-    setTimeout(() => {
-      handleWaitForOtherPlayer();
-    }, 15000);
+    // setTimeout(() => {
+    //   handleWaitForOtherPlayer();
+    // }, 15000);
   };
   const handleWaitForOtherPlayer = () => {
     let user_ID = localStorage.getItem("user_id");
@@ -208,6 +229,7 @@ function GameInterface() {
             text: data.question.text,
             options: data.question.options,
           },
+          correct_answer: data.question.correct_answer,
         });
       } else {
         getNewParagraph();
@@ -245,7 +267,8 @@ function GameInterface() {
             {paragraphData.question.options?.map((option, index) => (
               <button
                 key={index}
-                className="px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white text-md text-left"
+                className={`px-4 py-2 rounded-lg shadow hover:bg-blue-500 text-white text-md text-left ${ chosenAnswer !== option[0] ? 'bg-green-500' : 'bg-blue-600'}`}
+                onClick={() => setChosenAnswer(option[0])}
               >
                 {option}
               </button>
@@ -262,10 +285,11 @@ function GameInterface() {
           className="object-cover rounded-lg shadow"
         />
         <div className="bg-blue-100 rounded-lg shadow p-2 text-center mt-2 w-full">
-          <p className="text-blue-800 font-semibold">Your Monster:</p>
+          
           { players.length > 0 && players[playerIndex] != null  && players[playerIndex].current_monster != null ? (
             <>
-              <p className="text-blue-700">{players[playerIndex].current_monster.name}</p>
+            <p className="text-blue-800 font-semibold">Your Monster: {players[playerIndex].current_monster.name}</p>
+              {/* <p className="text-blue-700"></p> */}
               <p className="text-blue-700">Level: {players[playerIndex].current_monster.level}</p>
               <p className="text-blue-700">XP: {players[playerIndex].current_monster.xp}</p>
               <p className="text-blue-700">Health: {players[playerIndex].current_monster.health}</p>
@@ -302,7 +326,7 @@ function GameInterface() {
                     <button
                       key={index}
                       className="px-4 py-2 m-1 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white w-1/3"
-                      onClick={() => handleActionClick(action)}
+                      onClick={() => handleActionClick(action.api_name, players[playerIndex].current_monster.id)}
                     >
                       {action.name}
                     </button>
@@ -319,8 +343,8 @@ function GameInterface() {
         {/* Monsters Section */}
         <div className="flex flex-row space-x-4 mt-4 justify-center">
         {players.length > 0 && players[playerIndex] != null && players[playerIndex].monsters_roster != null ? (
-        <div className="flex flex-col items-center space-y-2">
-          {console.log (players[playerIndex].monsters_roster)}
+        <div className="flex justify-between items-center space-y-2">
+
           {players[playerIndex].monsters_roster.map((monsterIndex) => (
             <div key={monsterIndex} className="text-center">
               <p>Monster Index: {monsterIndex}</p>
@@ -362,10 +386,11 @@ function GameInterface() {
               className="object-cover rounded-lg shadow"
             />
             <div className="bg-blue-100 rounded-lg shadow p-2 text-center mt-2 w-full">
-              <p className="text-blue-800 font-semibold">Opponent Monster:</p>
+              
               {players.length > 1 && players[otherPlayerIndex] != null && players[otherPlayerIndex].current_monster != null ? (
                 <>
-                  <p className="text-blue-700">{players[otherPlayerIndex].current_monster.name}</p>
+                <p className="text-blue-800 font-semibold">Opponent Monster: {players[otherPlayerIndex].current_monster.name}</p>
+                  {/* <p className="text-blue-700"></p> */}
                   <p className="text-blue-700">Level: {players[otherPlayerIndex].current_monster.level}</p>
                   <p className="text-blue-700">XP: {players[otherPlayerIndex].current_monster.xp}</p>
                   <p className="text-blue-700">Health: {players[otherPlayerIndex].current_monster.health}</p>

@@ -659,7 +659,7 @@ app.get('/getstate', (req: Request, res: Response) => {
 
 // Returns a random paragraph from the database
 app.get('/randomparagraph', (req, res) => {
-  const query = 'SELECT passage, question, choice_A, choice_B, choice_C, choice_D FROM mytable ORDER BY RAND() LIMIT 1';
+  const query = 'SELECT passage, question, choice_A, choice_B, choice_C, choice_D, correct_answer FROM mytable ORDER BY RAND() LIMIT 1';
 
   pool.query(query, (error, results) => {
     if (error) {
@@ -676,7 +676,9 @@ app.get('/randomparagraph', (req, res) => {
             "B) " + row.choice_B,
             "C) " + row.choice_C,
             "D) " + row.choice_D
-          ]
+          ],
+          correct_answer: row.correct_answer
+          
         }
       });
     } else {
