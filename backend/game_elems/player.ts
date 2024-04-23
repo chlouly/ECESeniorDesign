@@ -5,10 +5,10 @@
 
 import { ResCode, isResCode } from '../error';
 import { Egg } from './egg';
-import { Monster, MonsterRow } from './monster';
-import { fetch_monster, update_player } from '../rds_actions';
+import { Monster, MonsterRow, MonsterType } from './monster';
+import { fetch_monster, new_monster, update_player } from '../rds_actions';
 
-const NUM_MONSTERS_ROSTER: number = 5;
+const NUM_MONSTERS_ROSTER: number = 6;
 const NUM_MONSTERS_BENCH: number = 120;
 const NUM_EGGS = 20;
 
@@ -100,6 +100,8 @@ class Player {
     // Checks if a particular monster id is in the player's bench
     private is_in_bench(id: number): boolean { return this.monsters_bench.some(m_id => m_id === id) }
 
+    public update_id(id: number) { this.id = id }
+
 
     /////////////////////////////////////////////
     //         USER LEVEL AND XP MANIP         //
@@ -111,20 +113,39 @@ class Player {
 
     // Use this function when adding to a player's XP
     // This function handles leveling up recursively
-    public increase_xp(xp: number) {
+    public async increase_xp(xp: number) {
         const level_up_xp = this.xp2lvl_up()      // The xp needed to level up (level up at level * 100 xp)
         if ((xp + this.xp) < level_up_xp) {
             this.xp += xp;
             return;
         }
 
+        // TODO, if level % 5 == 0 get new monster
         this.xp = 0;
         this.level += 1;
+
+        if (this.level % 5 === 0) {
+            const monster = new Monster("", -1, 1, 0, 100, 1, MonsterType.Legendary);
+
+            let m_id: number = await new_monster(this.id, monster);
+
+            monster.id = m_id;
+
+            if (this.current_monster === null) {
+                this.current_monster = monster;
+            }
+
+            this.add2bench(this.add2roster(m_id));
+        }
+
         this.increase_xp(xp - level_up_xp);
     }
 
 
     public async perform_action(opponent: Player, action: Action, m_id: number | null): Promise<ResCode> {
+        this.increase_xp(5);
+        this.current_monster?.increase_xp(10);
+
         switch (action) {
             case (Action.Attack): {
                 return this.attack(opponent);

@@ -10,22 +10,18 @@ import path = require('path');
 
 import mysql from 'mysql';
 import e = require('express');
-import multer, { MulterError } from 'multer';
+import multer from 'multer';
 import fs from 'fs';
 
 import { ResCode, isResCode } from './error';
 import { fetch_monster, fetch_player, new_egg, new_player } from './rds_actions';
 
-import jwt from 'jsonwebtoken';
-import axios from 'axios';
 
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 
-dotenv.config();
-
 const verifier = CognitoJwtVerifier.create({
   userPoolId: 'us-east-1_ZyFvL3MUy',
-  tokenUse : 'access',
+  tokenUse: 'access',
   clientId: '6ke1tj0bnmg6ij6t6354lfs30q',
 });
 
@@ -33,6 +29,7 @@ interface DecodedToken {
   sub: string; // Cognito uses 'sub' as the user ID
   [key: string]: any; // Additional claims
 }
+
 
 const pool = mysql.createPool({
   connectionLimit: 10,
@@ -57,13 +54,13 @@ declare global {
 // Dictionaries and lists to manage state
 
 // A dictionary of all players online
-let online: { [key: number] : Player } = {};
+let online: { [key: number]: Player } = {};
 
 // Queue of players who wish to be paired randomly
 let random_players = new MatchQueue;
 
 // Matches that are currently active
-let matches: { [key: number] : Match } = {};
+let matches: { [key: number]: Match } = {};
 
 /*
       TESTING DATA
@@ -91,8 +88,6 @@ export const storage_pdf = multer.diskStorage({
 });
 
 
-const app = express();
-const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
 const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
@@ -112,10 +107,14 @@ const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+
+const app = express();
+const port = process.env.SERVER_PORT || 3000; // You can choose any port
+
 app.use(express.static(process.env.PUBLIC_PATH || "/home/ec2-user/OSS/front-end/build"));
 app.use(express.json());
 
-const upload = multer({ 
+const upload = multer({
   storage: storage_pdf,
   fileFilter: (req, file, cb) => {
     if (path.extname(file.originalname) !== '.pdf') {
@@ -134,7 +133,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
   if (req.fileValidationError) {
     return res.status(400).json({ message: req.fileValidationError });
   }
-  
+
   if (!req.file) {
     return res.status(400).json({ message: 'Please upload a file.' });
   }
@@ -154,12 +153,15 @@ app.post('/upload', upload.single('file'), (req, res) => {
 //
 // Saves a player's state to the database and removes them
 // from the 'online' dictionary
-app.delete('/logout', (req: Request, res: Response) => {
-  // Validating request body
-  if (req.body === undefined) {
+app.delete('/logout', validateJwt, (req: Request, res: Response) => {
+
+  const user_sub = (req as any).user.sub;
+  // MAPPING USER SUB TO ID
+  const user_id = 1
+  if (user_id === undefined) {
     return res.status(ResCode.NoBody).end();
   }
-  
+
   // Parse for errors
   let code: ResCode = validate_match_ins(req.body.id, null, null, null);
   if (code !== ResCode.Ok) {
@@ -192,55 +194,64 @@ app.delete('/logout', (req: Request, res: Response) => {
 // Various ResCodes are returned on failure.
 // The Player Data with either ResCode.LoginSuc or ResCode.SignUpSuc status
 // is returned on success.
-
-
 app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
-  const user = (req as any).user as DecodedToken; // Use type assertion here
-  if (user) {
-      res.status(200).send({ user_id: user.sub });
-  } else {
-      res.status(401).send('No user information available');
+  const user = (req as any).user as DecodedToken;
+  const userId = user.sub;
+  console.log(userId);
+  if (!userId) {
+    return res.status(ResCode.PIDUndef);
   }
+
+  // Attempt to retrieve player object
+  let player: Player | ResCode = await fetch_player(userId);
+  console.log(player);
+
+  // Player was found
+  if (!isResCode(player)) {
+    // Put the player in the online dict
+    online[player.get_id()] = player;
+
+    console.log(player.get_data());
+    
+
+    // Return Player Data
+    return res.status(ResCode.LoginSuc).json(player.get_data());
+  } else if (player === ResCode.RDSErr) {
+    // Player was not found because of an RDS error
+    // (This doesn't necessarily mean that the player DNE)
+    console.log("RDS ERROR");
+    return res.status(ResCode.RDSErr).end();
+  }
+
+  // At this point the player did not exist, so we make a new one
+  player = new Player("", -1, [], [], [], null, 1, 0);
+
+  console.log(player);
+
+  // Adding the player to the DB
+  const code = await new_player(player, userId)
+
+  console.log(code);
+
+  // Insertion failed
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
+  }
+
+  // Re fetch player (this gets the correct ID)
+  player = await fetch_player(userId);
+
+  if (isResCode(player)) {
+    return res.status(player).end();
+  }
+
+  // Put the player in the online dict
+  online[player.get_id()] = player;
+
+
+  // Return Player Data
+  return res.status(ResCode.SignUpSuc).json(player.get_data());
 });
-//   let p_id = parseInt(userId);
-
-//   if (isNaN(p_id)) {
-//     return res.status(ResCode.PIDNaN);
-//   }
-
-//   // Attempt to retrieve player object
-//   let player: Player | ResCode = await fetch_player(p_id);
-
-//   // Player was found
-//   if (!isResCode(player)) {
-//     // Put the player in the online dict
-//     online[p_id] = player;
-
-//     // Return Player Data
-//     return res.status(ResCode.LoginSuc).json(player.get_data());
-//   } else if (player === ResCode.RDSErr) {
-//     // Player was not found because of an RDS error
-//     // (This doesn't necessarily mean that the player DNE)
-//     return res.status(ResCode.RDSErr).end();
-//   }
-
-//   // At this point the player did not exist, so we make a new one
-//   player = new Player("", p_id, [], [], [], null, 1, 0);
-
-//   // Adding the player to the DB
-//   const code = await new_player(player)
-
-//   // Insertion failed
-//   if (code !== ResCode.Ok) {
-//     return res.status(code).end();
-//   }
-
-//   // Put the player in the online dict
-//   online[p_id] = player;
-
-//   // Return Player Data
-//   return res.status(ResCode.SignUpSuc).json(player.get_data());
-// });
 
 
 ///////////////////////////////////////////////////////////
@@ -264,7 +275,7 @@ app.get('/username', (req: Request, res: Response) => {
     return res.status(ResCode.NotFound).end();
   }
 
-  res.status(ResCode.Ok).json({"username" : player.get_name()});
+  res.status(ResCode.Ok).json({ "username": player.get_name() });
 });
 
 
@@ -289,7 +300,7 @@ app.get('/difficulty', (req: Request, res: Response) => {
     return res.status(ResCode.NotFound).end();
   }
 
-  res.status(ResCode.Ok).json({"difficulty" : player.get_difficulty()});
+  res.status(ResCode.Ok).json({ "difficulty": player.get_difficulty() });
 });
 
 
@@ -408,8 +419,8 @@ app.post('/joinrandom', (req: Request, res: Response) => {
     return res.status(ResCode.NotFound).end;
   }
 
-  
-  
+
+
 });
 
 
@@ -430,7 +441,7 @@ app.post('/joingame', async (req: Request, res: Response) => {
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
   }
-  
+
   let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber, null, null);
   console.log(code);
   if (code !== ResCode.Ok) {
@@ -469,7 +480,7 @@ app.post('/joingame', async (req: Request, res: Response) => {
   // Match does not exist, create a new one
   if (match === undefined) {
     return res.status(ResCode.NotFound).end();
-  } 
+  }
 
   // Match does exist and is full
   if (match.is_full()) {
@@ -504,7 +515,7 @@ app.post('/action', async (req: Request, res: Response) => {
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
   }
-  
+
   // Parse for errors
   let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber, req.body.action, req.body.m_id);
   if (code !== ResCode.Ok) {
@@ -522,7 +533,7 @@ app.post('/action', async (req: Request, res: Response) => {
   const p_id: number = req.body.id;
   const gameNumber: number = req.body.gameNumber;
   const action: Action = req.body.action as Action;
-  const m_id: number | null = (action === Action.SwapMonster)? req.body.m_id : null;
+  const m_id: number | null = (action === Action.SwapMonster) ? req.body.m_id : null;
 
   // Get objects
   const match: Match | undefined = matches[gameNumber];
@@ -557,7 +568,7 @@ app.get('/waittomove', async (req: Request, res: Response) => {
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();
   }
-  
+
   // Parse for errors
   let code: ResCode = validate_match_ins(req.body.id, req.body.gameNumber, null, null);
   if (code !== ResCode.Ok) {
@@ -580,7 +591,7 @@ app.get('/waittomove', async (req: Request, res: Response) => {
   let wait_code: ResCode;
   wait_code = await match.wait_to_move(id);
 
-  return res.status(wait_code).end(match.get_data()) ;
+  return res.status(wait_code).end(match.get_data());
 });
 
 
@@ -628,7 +639,7 @@ app.post('/leavegame', (req: Request, res: Response) => {
   if (match === undefined) {
     player.current_game = null;
     return res.status(ResCode.NotFound).end();
-  } 
+  }
 
   // Leaving match
   if (!match.leave_game(id)) {
@@ -651,7 +662,7 @@ app.get('/getstate', (req: Request, res: Response) => {
   console.log("\nMATCHES:")
   console.log(matches);
 
-  return res.status(ResCode.Ok).json({'message' : "CHECK CONSOLE"});
+  return res.status(ResCode.Ok).json({ 'message': "CHECK CONSOLE" });
 });
 
 // Returns a random paragraph from the database
@@ -659,26 +670,26 @@ app.get('/randomparagraph', (req, res) => {
   const query = 'SELECT passage, question, choice_A, choice_B, choice_C, choice_D FROM mytable ORDER BY RAND() LIMIT 1';
 
   pool.query(query, (error, results) => {
-      if (error) {
-          console.error('Error fetching random row:', error);
-          res.status(500).send({ error: 'Error fetching random row', details: error });
-      } else if (results.length > 0) {
-          const row = results[0];
-          res.status(200).send({
-              paragraph: row.passage,
-              question: {
-                text: row.question,
-                options: [
-                  "A) " + row.choice_A,
-                  "B) " + row.choice_B,
-                  "C) " + row.choice_C,
-                  "D) " + row.choice_D
-                ]
-              }
-          });
-      } else {
-          res.status(404).send({ error: 'No data found' });
-      }
+    if (error) {
+      console.error('Error fetching random row:', error);
+      res.status(500).send({ error: 'Error fetching random row', details: error });
+    } else if (results.length > 0) {
+      const row = results[0];
+      res.status(200).send({
+        paragraph: row.passage,
+        question: {
+          text: row.question,
+          options: [
+            "A) " + row.choice_A,
+            "B) " + row.choice_B,
+            "C) " + row.choice_C,
+            "D) " + row.choice_D
+          ]
+        }
+      });
+    } else {
+      res.status(404).send({ error: 'No data found' });
+    }
   });
 });
 
@@ -708,11 +719,11 @@ app.listen(port, () => {
 //
 // Returns null if everything passes
 function validate_match_ins(
-  player_id: any, 
+  player_id: any,
   gameNumber: any,
   actionType: any,
   monster_id: any,
-  ): ResCode {
+): ResCode {
 
   // Validating the player id if it is needed
   if (player_id !== null) {
@@ -720,7 +731,7 @@ function validate_match_ins(
       return ResCode.PIDUndef;
     } else if (typeof player_id !== 'number') {
       return ResCode.PIDNaN;
-    } 
+    }
   }
 
   // Validating the gameNumber if it is needed
@@ -755,7 +766,7 @@ function validate_match_ins(
       return ResCode.PIDUndef;
     } else if (typeof monster_id !== 'number') {
       return ResCode.PIDNaN;
-    } 
+    }
   }
 
   // Other validation will go here...
@@ -764,7 +775,7 @@ function validate_match_ins(
   return ResCode.Ok;
 }
 
-export { 
+export {
   matches,
   online
 }

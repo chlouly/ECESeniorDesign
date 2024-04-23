@@ -25,10 +25,10 @@ const JoinGamePage = () => {
       })
       .then((data) => {
         console.log(data);
-        localStorage.setItem('gameNumber', data.gameNumber); // Storing the game number in local storage
-        localStorage.setItem('to_move', data.to_move); // Storing the player ID in local storage
-        localStorage.setItem('next_to_move', data.next_to_move); // Storing the player ID in local storage
-        localStorage.setItem('players', JSON.stringify(data.players)); // Storing the player ID in local storage
+        localStorage.setItem("gameNumber", data.gameNumber); // Storing the game number in local storage
+        localStorage.setItem("to_move", data.to_move); // Storing the player ID in local storage
+        localStorage.setItem("next_to_move", data.next_to_move); // Storing the player ID in local storage
+        localStorage.setItem("players", JSON.stringify(data.players)); // Storing the player ID in local storage
         console.log(data.players);
         navigate(`/game/${gameNumber}`);
       })
