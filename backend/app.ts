@@ -89,6 +89,25 @@ export const storage_pdf = multer.diskStorage({
 
 
 
+const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
+  const { authorization } = req.headers;
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return res.status(401).send('Authorization header must be provided and must start with Bearer');
+  }
+
+  const token = authorization.split(' ')[1];
+  try {
+    const payload = await verifier.verify(token); // Verifies the token
+    console.log("Token is valid. Payload:", payload);
+    (req as any).user = payload; // Store payload in request
+    next(); // Proceed to next middleware or route handler
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    res.status(401).send("Token not valid!");
+  }
+};
+
+
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
@@ -134,15 +153,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
 //
 // Saves a player's state to the database and removes them
 // from the 'online' dictionary
-app.delete('/logout', validateJwt, (req: Request, res: Response) => {
-
-  const user_sub = (req as any).user.sub;
-  // MAPPING USER SUB TO ID
-  const user_id = 1
-  if (user_id === undefined) {
-    return res.status(ResCode.NoBody).end();
-  }
-
+app.delete('/logout', (req: Request, res: Response) => {
   // Parse for errors
   let code: ResCode = validate_match_ins(req.body.id, null, null, null);
   if (code !== ResCode.Ok) {
