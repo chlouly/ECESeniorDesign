@@ -152,15 +152,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
 //
 // Saves a player's state to the database and removes them
 // from the 'online' dictionary
-app.delete('/logout', validateJwt, (req: Request, res: Response) => {
-
-  const user_sub = (req as any).user.sub;
-  // MAPPING USER SUB TO ID
-  const user_id = 1
-  if (user_id === undefined) {
-    return res.status(ResCode.NoBody).end();
-  }
-
+app.delete('/logout', (req: Request, res: Response) => {
   // Parse for errors
   let code: ResCode = validate_match_ins(req.body.id, null, null, null);
   if (code !== ResCode.Ok) {
