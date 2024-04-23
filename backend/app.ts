@@ -38,14 +38,6 @@ const pool = mysql.createPool({
   database: 'mydatabase'
 });
 
-// connection.connect((err: mysql.MysqlError) => {
-//   if (err) {
-//     logger.error('Error connecting to MySQL:', err);
-//   } else {
-//     logger.info('Connected to MySQL');
-//   }
-// });
-
 setup_rds_tables();
 
 // uploaf file using multer
@@ -118,11 +110,26 @@ const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
 const app = express();
 const port = process.env.SERVER_PORT || 3000; // You can choose any port
 
-// use environment for path
+const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
+  const { authorization } = req.headers;
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return res.status(401).send('Authorization header must be provided and must start with Bearer');
+  }
+
+  const token = authorization.split(' ')[1];
+  try {
+    const payload = await verifier.verify(token); // Verifies the token
+    console.log("Token is valid. Payload:", payload);
+    (req as any).user = payload; // Store payload in request
+    next(); // Proceed to next middleware or route handler
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    res.status(401).send("Token not valid!");
+  }
+};
 
 app.use(express.static(process.env.PUBLIC_PATH || "/home/ec2-user/OSS/front-end/build"));
 app.use(express.json());
-
 
 const upload = multer({ 
   storage: storage_pdf,
