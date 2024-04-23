@@ -7,10 +7,13 @@ import { ResCode, isResCode } from '../error';
 import { Egg } from './egg';
 import { Monster, MonsterRow, MonsterType } from './monster';
 import { fetch_monster, new_monster, update_player } from '../rds_actions';
+import { logger } from '../logger';
 
 const NUM_MONSTERS_ROSTER: number = 6;
 const NUM_MONSTERS_BENCH: number = 120;
 const NUM_EGGS = 20;
+const MIN_DAMAGE = 2;
+const MAX_DAMAGE = 99;
 
 enum Difficulty {
     Easy = "EASY",
@@ -157,8 +160,18 @@ class Player {
     }
 
     // TODO
-    private attack(player: Player): ResCode {
-        return ResCode.NotImplemented;
+    private attack(opponent: Player): ResCode {
+        if (this.current_monster === null || opponent.current_monster === null) {
+            logger.error("Error when attacking, one of the players has no current monster.");
+            return ResCode.NotFound;
+        }
+
+        const my_lvl = this.current_monster.level;
+        const op_lvl = opponent.current_monster.level;
+
+        const dmg = (my_lvl - op_lvl + 100 + MIN_DAMAGE)
+
+        return ResCode.Ok;
     }
 
     // Heals the primary monster
