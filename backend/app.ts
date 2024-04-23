@@ -547,7 +547,7 @@ app.post('/action', async (req: Request, res: Response) => {
 // then nothing hapens. If there is conflicting backend
 // information, it gets corrected by leaving the game
 // automaticaly
-app.get('/waittomove', async (req: Request, res: Response) => {
+app.post('/waittomove', async (req: Request, res: Response) => {
   // Validating request body
   if (req.body === undefined) {
     return res.status(ResCode.NoBody).end();

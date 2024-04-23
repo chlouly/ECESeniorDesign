@@ -117,7 +117,7 @@ function GameInterface() {
     let user_ID = localStorage.getItem("user_id");
     user_ID = parseInt(user_ID, 10);
     fetch("/waittomove", {
-      method: "GET",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
