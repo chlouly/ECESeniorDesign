@@ -126,6 +126,11 @@ function GameInterface() {
       .then((response) => {
         if (response.status === 200) {
           return response.json();
+        } else if (response.status === 205) {
+          console.log("No other player has moved yet");
+          setTimeout(() => {
+            handleWaitForOtherPlayer();
+          }, 2000);
         } else {
           console.error("Not response 200");
           throw new Error("Failed to wait for other player");
@@ -140,7 +145,7 @@ function GameInterface() {
           console.error("Fetch aborted due to timeout");
           alert("Request timed out. Please try again.");
         } else {
-          alert(error.message);
+          alert(error);
           console.error(error);
         }
       });
@@ -187,7 +192,7 @@ function GameInterface() {
       className="bg-cover h-screen grid grid-rows-3 grid-flow-col grid grid-cols-3 grid_flow_col gap-4 p-4"
       style={{ backgroundImage: `url(${battle_arena}), height: 100vh` }}
     >
-      <div className="bg-blue-100 rounded-lg row-span-2 shadow p-4 flex flex-col h-full">
+      <div className="bg-blue-100 rounded-lg col-span-1 row-span-3 shadow p-4 flex flex-col h-full">
         <div className="flex-1 overflow-y-auto p-4">
           <p className="text-blue-800 font-semibold text-left text-xl">
             Paragraph:
@@ -218,7 +223,7 @@ function GameInterface() {
       </div>
       
       {/* Monster 1 Section */}
-      <div className="flex col-span-1 row-span-2 flex-col items-center justify-center">
+      <div className="flex col-span-1 row-span-2 flex-col items-center  justify-center">
         <img
           src={monster1}
           alt="Monster 1"
