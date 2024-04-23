@@ -121,7 +121,7 @@ function GameInterface() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id: user_ID, gameNumber: gameNumber }),
+      body: JSON.stringify({ id: user_ID, gameNumber: parseInt(gameNumber) }),
     })
       .then((response) => {
         if (response.status === 200) {
