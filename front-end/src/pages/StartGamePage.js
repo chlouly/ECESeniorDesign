@@ -9,7 +9,8 @@ const StartGamePage = () => {
 
   const handleStartGame = () => {
     console.log('Game started');
-    const user_ID = localStorage.getItem('user_id'); 
+    let user_ID = localStorage.getItem('user_id'); 
+    user_ID = parseInt(user_ID, 10);
   
     // Sending the request to the backend
     fetch('/joingame', {

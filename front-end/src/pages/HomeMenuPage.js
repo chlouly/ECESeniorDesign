@@ -51,12 +51,11 @@ const HomeMenu = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
     }
-    // Clear local authentication state
-    localStorage.removeItem("id_token");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("isAuthenticated");
 
-    window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/login&redirect_uri=https%3A%2F%2Fpokidips.games/login`;
+    // Clean all the local storage
+    localStorage.clear();
+
+    window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/&redirect_uri=https%3A%2F%2Fpokidips.games/`;
   };
 
   return (

@@ -28,13 +28,15 @@ function GameInterface() {
   });
 
   const handleLeaveGame = () => {
+    let user_ID = localStorage.getItem("user_id");
+    user_ID = parseInt(user_ID, 10);
     fetch("/leavegame", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        id: 1,
+        id: user_ID,
         gameNumber: gameNumber,
       }),
     })
@@ -75,13 +77,15 @@ function GameInterface() {
   };
 
   const handleActionClick = (action) => {
+    let user_ID = localStorage.getItem("user_id");
+    user_ID = parseInt(user_ID, 10);
     fetch("/action", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        id: 1,
+        id: user_ID,
         gameNumber: gameNumber,
         action: action,
         m_id: 1,
@@ -110,7 +114,8 @@ function GameInterface() {
     }, 15000);
   };
   const handleWaitForOtherPlayer = () => {
-    const user_ID = localStorage.getItem("user_id");
+    let user_ID = localStorage.getItem("user_id");
+    user_ID = parseInt(user_ID, 10);
     fetch("/waittomove", {
       method: "POST",
       headers: {
