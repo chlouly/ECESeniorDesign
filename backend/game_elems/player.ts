@@ -198,7 +198,7 @@ class Player {
         }
 
         // If the desired monster is dead, dont let them switch
-        if (monster.alive === false) {
+        if (monster.is_alive() === false) {
             return ResCode.MonsterDead;
         }
 
@@ -236,6 +236,41 @@ class Player {
         this.add2bench(this.add2roster(m_id));
 
         return;
+    }
+
+    public async check_4_dead(): Promise<ResCode> {
+        if (this.current_monster === null || !this.current_monster.is_alive()) {
+            return await this.get_next_alive()
+        }
+
+        return ResCode.YourTurn;
+    }
+
+    public async get_next_alive(): Promise<ResCode> {
+        for (var id of this.monsters_roster) {
+            // Skip the current monster
+            if (this.current_monster !== null && this.current_monster.id === id) {
+                continue;
+            }
+
+            // Get the monster from DB
+            const monster: Monster | ResCode = await fetch_monster(this.id, id);
+
+            // Check if it failed
+            if (isResCode(monster)) {
+                return monster;
+            }
+
+            // We have found a monster that isnt dead
+            if (monster.is_alive()) {
+                this.current_monster?.save2db(this.id);
+                this.current_monster = monster;
+                return ResCode.YourTurn;
+            }
+        }
+
+        // Out of monsters, you have lost
+        return ResCode.Defeat;
     }
 
     // This function adds a monster's id to the player's roster of monsters

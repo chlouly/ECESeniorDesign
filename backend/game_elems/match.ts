@@ -114,6 +114,7 @@ class Match {
         }
 
         if (corr_ans !== chosen_ans) {
+            this.next_turn();
             return ResCode.Incorrect;
         }
 
@@ -137,7 +138,7 @@ class Match {
             const checkInterval = setInterval(() => {
                 if (this.is_your_turn(id) && this.is_full()) {
                     clearInterval(checkInterval);
-                    resolve(ResCode.YourTurn);
+                    resolve(this.players[id].check_4_dead());
                 }
             }, TURN_POLL);
 

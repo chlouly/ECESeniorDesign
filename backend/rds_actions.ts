@@ -186,8 +186,8 @@ async function delete_player(p_id: number): Promise<ResCode> {
 async function new_monster(p_id: number, monster: Monster): Promise<number | ResCode> {
     const client = await get_rds_connection();
     const query = `
-        INSERT INTO ${MONSTER_TABLE_NAME} (name, user_id, level, xp, ev_num, type)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO ${MONSTER_TABLE_NAME} (name, user_id, level, xp, ev_num, type, health)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id;  -- This will return the new monster's ID after insertion
     `;
     const values = [
@@ -196,7 +196,8 @@ async function new_monster(p_id: number, monster: Monster): Promise<number | Res
         monster.level,
         monster.xp,
         monster.evolution_number,
-        monster.type
+        monster.type,
+        monster.health
     ];
 
     try {
@@ -219,8 +220,8 @@ async function update_monster(p_id: number, monster: Monster): Promise<ResCode> 
     const client = await get_rds_connection();
     const query = `
         UPDATE ${MONSTER_TABLE_NAME}
-        SET name = $1, level = $2, xp = $3, ev_num = $4
-        WHERE id = $5 AND user_id = $6;
+        SET name = $1, level = $2, xp = $3, ev_num = $4, health = $5
+        WHERE id = $6 AND user_id = $7;
     `;
 
     const values = [
@@ -228,6 +229,7 @@ async function update_monster(p_id: number, monster: Monster): Promise<ResCode> 
         monster.level,
         monster.xp,
         monster.evolution_number,
+        monster.health,
         monster.id,
         p_id
     ]
