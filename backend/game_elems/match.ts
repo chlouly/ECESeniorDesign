@@ -114,6 +114,7 @@ class Match {
         }
 
         if (corr_ans !== chosen_ans) {
+            this.next_turn();
             return ResCode.Incorrect;
         }
 
