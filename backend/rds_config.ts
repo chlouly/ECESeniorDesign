@@ -57,7 +57,7 @@ async function setup_rds_tables() {
       level INT NOT NULL,
       xp INT NOT NULL,
       cur_egg INT,
-      cur_m_id INT
+      cur_m_id INT,
       FOREIGN KEY (id) REFERENCES ${COGNITO_TABLE_NAME}(id)
     );
 
@@ -102,7 +102,29 @@ async function setup_rds_tables() {
   }
 }
 
+async function clear_db() {
+  const client = await get_rds_connection();
+
+  const query = `
+    DROP TABLE IF EXISTS ${COGNITO_TABLE_NAME};
+    DROP TABLE IF EXISTS ${USER_TABLE_NAME};
+    DROP TABLE IF EXISTS ${MONSTER_TABLE_NAME};
+    DROP TABLE IF EXISTS ${EGG_TABLE_NAME};
+  `;
+  
+  try {
+    await client.query(query);
+    logger.debug(`Successfully cleared tables`);
+    await setup_rds_tables();
+  } catch (error) {
+    logger.error('Error creating table:', error);
+  } finally {
+    await client.end();
+  }
+}
+
 export { 
+  clear_db,
   setup_rds_tables,
   get_rds_connection,
   USER_TABLE_NAME,

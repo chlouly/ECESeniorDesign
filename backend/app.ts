@@ -2,7 +2,7 @@ import express = require('express');
 import { Request, Response, NextFunction } from 'express';
 import * as dotenv from 'dotenv';
 import { logger } from "./logger";
-import { setup_rds_tables } from "./rds_config";
+import { clear_db, setup_rds_tables } from "./rds_config";
 import { Player, Difficulty, Action, validActions } from "./game_elems/player";
 import { MatchQueue, Match } from './game_elems/match';
 import { Monster } from './game_elems/monster';
@@ -39,7 +39,8 @@ const pool = mysql.createPool({
   database: 'mydatabase'
 });
 
-setup_rds_tables();
+//setup_rds_tables();
+clear_db();
 
 // uploaf file using multer
 declare global {
