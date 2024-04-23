@@ -116,21 +116,28 @@ function GameInterface() {
   const handleWaitForOtherPlayer = () => {
     let user_ID = localStorage.getItem("user_id");
     user_ID = parseInt(user_ID, 10);
+  
+    // Create an AbortController instance
+    const controller = new AbortController();
+    const signal = controller.signal;
+  
+    // Set a timeout to abort the fetch request after 5 minutes
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 300,000 ms = 5 minutes
+  
     fetch("/waittomove", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ id: user_ID, gameNumber: parseInt(gameNumber) }),
+      signal: signal  // Pass the abort signal to the fetch call
     })
       .then((response) => {
+        clearTimeout(timeoutId); // Clear the timeout on receiving a response
         if (response.status === 200) {
           return response.json();
         } else if (response.status === 205) {
           console.log("No other player has moved yet");
-          setTimeout(() => {
-            handleWaitForOtherPlayer();
-          }, 2000);
         } else {
           console.error("Not response 200");
           throw new Error("Failed to wait for other player");
@@ -141,6 +148,7 @@ function GameInterface() {
         console.log(data);
       })
       .catch((error) => {
+        clearTimeout(timeoutId); // Ensure to clear the timeout if an error occurs
         if (error.name === "AbortError") {
           console.error("Fetch aborted due to timeout");
           alert("Request timed out. Please try again.");
@@ -150,6 +158,7 @@ function GameInterface() {
         }
       });
   };
+  
 
   useEffect(() => {
     try {
