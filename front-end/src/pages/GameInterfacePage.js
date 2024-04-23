@@ -110,12 +110,13 @@ function GameInterface() {
     }, 15000);
   };
   const handleWaitForOtherPlayer = () => {
+    const user_ID = localStorage.getItem("user_id");
     fetch("/waittomove", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id: 1, gameNumber: gameNumber }),
+      body: JSON.stringify({ id: user_ID, gameNumber: gameNumber }),
     })
       .then((response) => {
         if (response.status === 200) {
@@ -181,7 +182,7 @@ function GameInterface() {
       className="bg-cover h-screen grid grid-rows-3 grid-flow-col grid grid-cols-3 grid_flow_col gap-4 p-4"
       style={{ backgroundImage: `url(${battle_arena}), height: 100vh` }}
     >
-      <div className="bg-blue-100 rounded-lg shadow p-4 flex flex-col h-screen">
+      <div className="bg-blue-100 rounded-lg row-span-2 shadow p-4 flex flex-col h-screen">
         <div className="flex-1 overflow-y-auto p-4">
           <p className="text-blue-800 font-semibold text-left text-xl">
             Paragraph:
