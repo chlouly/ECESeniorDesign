@@ -87,9 +87,9 @@ async function setup_rds_tables() {
     -- key constraints on arrays directly. Management of this array for referential integrity
     -- will need to be handled at the application level or through triggers/procedures.
     ALTER TABLE Users
-    ADD COLUMN roster INT[];
+    ADD COLUMN monsters_roster INT[];
     ALTER TABLE Users
-    ADD COLUMN bench INT[];
+    ADD COLUMN monsters_bench INT[];
     ALTER TABLE Users
     ADD COLUMN eggs INT[];
     `;
@@ -106,10 +106,10 @@ async function clear_db() {
   const client = await get_rds_connection();
 
   const query = `
-    DROP TABLE IF EXISTS ${COGNITO_TABLE_NAME};
+    DROP TABLE IF EXISTS ${EGG_TABLE_NAME};
     DROP TABLE IF EXISTS ${USER_TABLE_NAME};
     DROP TABLE IF EXISTS ${MONSTER_TABLE_NAME};
-    DROP TABLE IF EXISTS ${EGG_TABLE_NAME};
+    DROP TABLE IF EXISTS ${COGNITO_TABLE_NAME};
   `;
   
   try {
