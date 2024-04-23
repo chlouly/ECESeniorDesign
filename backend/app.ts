@@ -575,7 +575,7 @@ app.post('/waittomove', async (req: Request, res: Response) => {
   let wait_code: ResCode;
   wait_code = await match.wait_to_move(id);
 
-  return res.status(wait_code).end(match.get_data());
+  return res.status(wait_code).json(match.get_data());
 });
 
 

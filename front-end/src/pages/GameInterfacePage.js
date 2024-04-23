@@ -134,18 +134,22 @@ function GameInterface() {
     })
       .then((response) => {
         clearTimeout(timeoutId); // Clear the timeout on receiving a response
-        if (response.status === 200) {
-          return response.json();
-        } else if (response.status === 205) {
-          console.log("No other player has moved yet");
+  
+        if (response.status === 210) {
+          console.log("Other player has moved");
+          return response.json(); // Parse JSON only if the status is 210
+        } else if (response.status === 555) {
+          console.log("No move yet, polling again...");
+          handleWaitForOtherPlayer(); // Recursive call to wait again
         } else {
-          console.error("Not response 200");
+          console.error("Unexpected response status:", response.status);
           throw new Error("Failed to wait for other player");
         }
       })
       .then((data) => {
-        console.log("Other player has moved");
-        console.log(data);
+        if (data) {
+          console.log("Move data received:", data);
+        }
       })
       .catch((error) => {
         clearTimeout(timeoutId); // Ensure to clear the timeout if an error occurs
@@ -154,10 +158,12 @@ function GameInterface() {
           alert("Request timed out. Please try again.");
         } else {
           alert(error);
-          console.error(error);
+          console.error("Fetch error:", error);
         }
       });
   };
+  
+  
   
 
   useEffect(() => {
