@@ -16,10 +16,18 @@ import fs from 'fs';
 import { ResCode, isResCode } from './error';
 import { fetch_monster, fetch_player, new_egg, new_player } from './rds_actions';
 
-const expressJwt = require('express-jwt');
-import { Request as JWTRequest } from 'express-jwt';
-import jwksRsa from 'jwks-rsa';
+import { CognitoJwtVerifier } from "aws-jwt-verify";
 
+const verifier = CognitoJwtVerifier.create({
+  userPoolId: 'us-east-1_ZyFvL3MUy',
+  tokenUse: 'access',
+  clientId: '6ke1tj0bnmg6ij6t6354lfs30q',
+});
+
+interface DecodedToken {
+  sub: string; // Cognito uses 'sub' as the user ID
+  [key: string]: any; // Additional claims
+}
 
 
 const pool = mysql.createPool({
@@ -88,7 +96,23 @@ export const storage_pdf = multer.diskStorage({
 
 
 
+const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
+  const { authorization } = req.headers;
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return res.status(401).send('Authorization header must be provided and must start with Bearer');
+  }
 
+  const token = authorization.split(' ')[1];
+  try {
+    const payload = await verifier.verify(token); // Verifies the token
+    console.log("Token is valid. Payload:", payload);
+    (req as any).user = payload; // Store payload in request
+    next(); // Proceed to next middleware or route handler
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    res.status(401).send("Token not valid!");
+  }
+};
 
 
 const app = express();
@@ -177,51 +201,53 @@ app.delete('/logout', (req: Request, res: Response) => {
 // Various ResCodes are returned on failure.
 // The Player Data with either ResCode.LoginSuc or ResCode.SignUpSuc status
 // is returned on success.
-// app.post('/new_user', checkJwt, async (req: ReqWithUser, res: Response) => {
-//   const userId = req.auth?.sub;  
-//   if (!userId) {
-//     return res.status(ResCode.PIDUndef);
-//   }
+app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
+  const user = (req as any).user as DecodedToken;
+  const userId = user.sub;
+  if (!userId) {
+    return res.status(ResCode.PIDUndef);
+  }
 
-//   let p_id = parseInt(userId);
+  // Attempt to retrieve player object
+  let player: Player | ResCode = await fetch_player(userId);
 
-//   if (isNaN(p_id)) {
-//     return res.status(ResCode.PIDNaN);
-//   }
+  // Player was found
+  if (!isResCode(player)) {
+    // Put the player in the online dict
+    online[player.get_id()] = player;
 
-//   // Attempt to retrieve player object
-//   let player: Player | ResCode = await fetch_player(p_id);
+    // Return Player Data
+    return res.status(ResCode.LoginSuc).json(player.get_data());
+  } else if (player === ResCode.RDSErr) {
+    // Player was not found because of an RDS error
+    // (This doesn't necessarily mean that the player DNE)
+    return res.status(ResCode.RDSErr).end();
+  }
 
-//   // Player was found
-//   if (!isResCode(player)) {
-//     // Put the player in the online dict
-//     online[p_id] = player;
+  // At this point the player did not exist, so we make a new one
+  player = new Player("", -1, [], [], [], null, 1, 0);
 
-//     // Return Player Data
-//     return res.status(ResCode.LoginSuc).json(player.get_data());
-//   } else if (player === ResCode.RDSErr) {
-//     // Player was not found because of an RDS error
-//     // (This doesn't necessarily mean that the player DNE)
-//     return res.status(ResCode.RDSErr).end();
-//   }
+  // Adding the player to the DB
+  const code = await new_player(player, userId)
 
-//   // At this point the player did not exist, so we make a new one
-//   player = new Player("", p_id, [], [], [], null, 1, 0);
+  // Insertion failed
+  if (code !== ResCode.Ok) {
+    return res.status(code).end();
+  }
 
-//   // Adding the player to the DB
-//   const code = await new_player(player)
+  // Re fetch player (this gets the correct ID)
+  player = await fetch_player(userId);
 
-//   // Insertion failed
-//   if (code !== ResCode.Ok) {
-//     return res.status(code).end();
-//   }
+  if (isResCode(player)) {
+    return res.status(player).end();
+  }
 
-//   // Put the player in the online dict
-//   online[p_id] = player;
+  // Put the player in the online dict
+  online[player.get_id()] = player;
 
-//   // Return Player Data
-//   return res.status(ResCode.SignUpSuc).json(player.get_data());
-// });
+  // Return Player Data
+  return res.status(ResCode.SignUpSuc).json(player.get_data());
+});
 
 
 ///////////////////////////////////////////////////////////

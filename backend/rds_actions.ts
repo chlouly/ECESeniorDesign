@@ -1,5 +1,5 @@
 import { QueryResult } from 'pg';
-import { get_rds_connection, USER_TABLE_NAME, MONSTER_TABLE_NAME, EGG_TABLE_NAME } from './rds_config';
+import { get_rds_connection, USER_TABLE_NAME, MONSTER_TABLE_NAME, EGG_TABLE_NAME, COGNITO_TABLE_NAME } from './rds_config';
 import { logger } from './logger';
 import { Monster, MonsterRow, row2monster} from './game_elems/monster';
 import { ResCode } from './error';
@@ -9,9 +9,15 @@ import { Egg, EggRow, egg2row, row2egg } from './game_elems/egg';
 
 /* --- PLAYER DB INTERACTIONS --- */
 // NEW PLAYER
-async function new_player(player: Player): Promise<ResCode> {
+async function new_player(player: Player, auth: string): Promise<ResCode> {
     const client = await get_rds_connection();
-    const query = `
+    const query1 = `
+        INSERT INTO ${COGNITO_TABLE_NAME} (auth_token)
+        VALUES ($1)
+        RETURNING id;
+    `;
+
+    const query2 = `
         INSERT INTO ${USER_TABLE_NAME} (id, name, level, xp, cur_egg, cur_m_id, roster, bench, eggs)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id;  // This will return the new monster's ID after insertion
@@ -19,7 +25,11 @@ async function new_player(player: Player): Promise<ResCode> {
 
     const row = player2row(player);
 
-    const values = [
+    const values1 = [
+        auth
+    ]
+
+    const values2 = [
         row.id,
         row.name,
         row.level,
@@ -32,9 +42,20 @@ async function new_player(player: Player): Promise<ResCode> {
     ];
 
     try {
-        const res = await client.query(query, values);
+        // Insert auth token into Cognito db
+        const res1 = await client.query(query1, values1);
 
-        if (res.rowCount === 0) {
+        if (res1.rowCount === 0) {
+            return ResCode.RDSErr;
+        }
+
+        // Geting user ID from that
+        const id: number = res1.rows[0].id;
+
+        // Creating new player from that id
+        const res2 = await client.query(query2, values2);
+
+        if (res2.rowCount === 0) {
             return ResCode.RDSErr;
         }
 
@@ -89,24 +110,39 @@ async function update_player(player: Player): Promise<ResCode> {
 }
 
 // FETCH PLAYER
-async function fetch_player(p_id: number): Promise<Player | ResCode> {
+async function fetch_player(auth: string): Promise<Player | ResCode> {
     const client = await get_rds_connection();
-    const query = `
+
+    const query1 = `
+        SELECT * FROM ${COGNITO_TABLE_NAME}
+        WHERE auth_token = $1;
+    `;
+
+    const query2 = `
         SELECT * FROM ${USER_TABLE_NAME}
         WHERE id = $1;
     `;
-    const values = [
-        p_id
-    ]
+
+    const values1 = [
+        auth
+    ];
 
     try {
-        let res: QueryResult<PlayerRow> = await client.query(query, values);
+        let res1 = await client.query(query1, values1);
 
-        if (res.rowCount === 0) {
+        if (res1.rowCount === 0) {
             return ResCode.NotFound;
         }
 
-        return row2player(res.rows[0]);
+        const id: number = res1.rows[0].id;
+
+        let res2: QueryResult<PlayerRow> = await client.query(query2, [id]);
+
+        if (res2.rowCount === 0) {
+            return ResCode.NotFound;
+        }
+
+        return row2player(res2.rows[0]);
     } catch (error) {
         logger.error('Error Manipulating RDS DB -- fetch_player():', error);
         return ResCode.RDSErr;

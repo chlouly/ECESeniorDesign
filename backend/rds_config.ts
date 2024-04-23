@@ -22,6 +22,7 @@ const dbConfig = {
   },
 };
 
+const COGNITO_TABLE_NAME = 'AWS_Auth'
 const USER_TABLE_NAME = 'Users';
 const MONSTER_TABLE_NAME = 'Monsters';
 const EGG_TABLE_NAME = 'Eggs';
@@ -44,14 +45,20 @@ async function setup_rds_tables() {
 
   try {
     const query = `
+    CREATE TABLE IF NOT EXISTS ${COGNITO_TABLE_NAME} (
+      id SERIAL PRIMARY KEY,
+      auth_token VARCHAR(255) NOT NULL
+    );
+
     -- Create the Users table
     CREATE TABLE IF NOT EXISTS ${USER_TABLE_NAME} (
-      id SERIAL PRIMARY KEY,
+      id INT NOT NULL,
       name VARCHAR(50) NOT NULL,
       level INT NOT NULL,
       xp INT NOT NULL,
       cur_egg INT,
       cur_m_id INT
+      FOREIGN KEY (id) REFERENCES ${COGNITO_TABLE_NAME}(id)
     );
 
     -- Create the Monsters table with a foreign key reference to the Users table
@@ -63,7 +70,7 @@ async function setup_rds_tables() {
       xp INT,
       ev_num INT,
       type INT,
-      FOREIGN KEY (user_id) REFERENCES Users(id)
+      FOREIGN KEY (user_id) REFERENCES ${COGNITO_TABLE_NAME}(id)
     );
 
     -- Creating the Eggs table with foreign key reference to Users
@@ -72,7 +79,7 @@ async function setup_rds_tables() {
       user_id INT,
       type INT,
       hatch_start_time INT,
-      FOREIGN KEY (user_id) REFERENCES Users(id)
+      FOREIGN KEY (user_id) REFERENCES ${COGNITO_TABLE_NAME}(id)
     );
 
     -- Add a column to Users for storing an array of monster IDs. This step is done
@@ -85,12 +92,6 @@ async function setup_rds_tables() {
     ADD COLUMN bench INT[];
     ALTER TABLE Users
     ADD COLUMN eggs INT[];
-
-    -- Modifying user table to take id as an input while maintaining that it is a primary key
-    DROP SEQUENCE IF EXISTS ${USER_TABLE_NAME}_id_seq;
-    CREATE SEQUENCE ${USER_TABLE_NAME}_id_seq;
-    ALTER TABLE ${USER_TABLE_NAME} ALTER COLUMN id SET DEFAULT nextval('${USER_TABLE_NAME}_id_seq'::regclass);
-    ALTER TABLE ${USER_TABLE_NAME} ADD CONSTRAINT unique_id UNIQUE (id);
     `;
     await client.query(query);
     logger.debug(`Successfully created tables`);
@@ -106,5 +107,6 @@ export {
   get_rds_connection,
   USER_TABLE_NAME,
   MONSTER_TABLE_NAME,
-  EGG_TABLE_NAME
+  EGG_TABLE_NAME,
+  COGNITO_TABLE_NAME
 }
