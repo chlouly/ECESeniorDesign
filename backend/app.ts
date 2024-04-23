@@ -189,6 +189,11 @@ app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
 
   // Player was found
   if (!isResCode(player)) {
+    // Check if the player is already online
+    if (online[player.get_id()] !== undefined) {
+      return res.status(ResCode.LoginSuc).json(online[player.get_id()].get_data());
+    }
+
     // Put the player in the online dict
     online[player.get_id()] = player;
 
@@ -575,7 +580,7 @@ app.get('/waittomove', async (req: Request, res: Response) => {
   let wait_code: ResCode;
   wait_code = await match.wait_to_move(id);
 
-  return res.status(wait_code).end(match.get_data());
+  return res.status(wait_code).json(match.get_data());
 });
 
 
