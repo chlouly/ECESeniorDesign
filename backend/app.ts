@@ -232,7 +232,7 @@ app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
     return res.status(player).end();
   }
 
-  await player.new_monster("");
+  await player.new_monster();
 
   // Put the player in the online dict
   online[player.get_id()] = player;
