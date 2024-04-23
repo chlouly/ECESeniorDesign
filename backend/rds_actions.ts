@@ -20,7 +20,7 @@ async function new_player(player: Player, auth: string): Promise<ResCode> {
     const query2 = `
         INSERT INTO ${USER_TABLE_NAME} (id, name, level, xp, cur_egg, cur_m_id, roster, bench, eggs)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id;  // This will return the new monster's ID after insertion
+        RETURNING id;  -- This will return the new monster's ID after insertion
     `;
 
     const row = player2row(player);
@@ -28,18 +28,6 @@ async function new_player(player: Player, auth: string): Promise<ResCode> {
     const values1 = [
         auth
     ]
-
-    const values2 = [
-        row.id,
-        row.name,
-        row.level,
-        row.xp,
-        row.currently_hatching_egg,
-        row.current_monster,
-        row.monsters_roster,
-        row.monsters_bench,
-        row.eggs
-    ];
 
     try {
         // Insert auth token into Cognito db
@@ -51,6 +39,18 @@ async function new_player(player: Player, auth: string): Promise<ResCode> {
 
         // Geting user ID from that
         const id: number = res1.rows[0].id;
+
+        const values2 = [
+            id,
+            row.name,
+            row.level,
+            row.xp,
+            row.currently_hatching_egg,
+            row.current_monster,
+            row.monsters_roster,
+            row.monsters_bench,
+            row.eggs
+        ];
 
         // Creating new player from that id
         const res2 = await client.query(query2, values2);
@@ -187,8 +187,8 @@ async function new_monster(p_id: number, monster: Monster): Promise<number | Res
     const client = await get_rds_connection();
     const query = `
         INSERT INTO ${MONSTER_TABLE_NAME} (name, user_id, level, xp, ev_num, type)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id;  // This will return the new monster's ID after insertion
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id;  -- This will return the new monster's ID after insertion
     `;
     const values = [
         monster.name,
@@ -316,7 +316,7 @@ async function new_egg(p_id: number, egg: Egg): Promise<number | ResCode> {
     const query = `
         INSERT INTO ${EGG_TABLE_NAME} (user_id, type, hatch_start_time)
         VALUES ($1, $2, $3)
-        RETURNING id;  // This will return the new monster's ID after insertion
+        RETURNING id;  -- This will return the new monster's ID after insertion
     `;
 
     const row = egg2row(egg);
