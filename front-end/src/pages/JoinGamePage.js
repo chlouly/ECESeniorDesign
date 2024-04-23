@@ -5,7 +5,8 @@ const JoinGamePage = () => {
   const [gameNumber, setGameNumber] = useState("");
   const navigate = useNavigate();
   const handleJoinGame = () => {
-    const user_ID = localStorage.getItem("user_id");
+    let user_ID = localStorage.getItem("user_id");
+    user_ID = parseInt(user_ID, 10);
     const gameNumberInt = parseInt(gameNumber, 10);
     console.log(gameNumberInt);
     // Make a request to the server to join the game
