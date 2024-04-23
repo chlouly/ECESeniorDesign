@@ -13,6 +13,7 @@ class Match {
     public match_number: number;
     private to_move: number = 0;        // The player ID of the player who moves now
     private next_to_move: number = 0;   // The player ID of the player who moves next
+    private loser: number = 0;         // The id of the winner of the game (0 when game is in progress)
 
     // Matches are empty to start with
     public constructor(match_number: number | null) {
@@ -39,6 +40,10 @@ class Match {
 
     private is_your_turn(id: number): boolean {
         return this.to_move === id;
+    }
+
+    public loser_id(): number | null {
+        return (this.loser === 0)? null : this.loser;
     }
 
     public async join(player: Player): Promise<boolean> {
@@ -129,16 +134,35 @@ class Match {
         return ResCode.Correct;
     }
 
+    public async check_for_win(id: number): ResCode | null {
+        if (this.loser === 0) {
+            return null;
+        } else if (this.loser === id) {
+            return ResCode.Defeat;
+        } else {
+            return ResCode.Victory;
+        }
+    }
+
     public async wait_to_move(id: number): Promise<ResCode> {
         return new Promise ((resolve, _) => {
             if (!this.is_in_match(id)) {
                 resolve(ResCode.NotInMatch);
             }
 
-            const checkInterval = setInterval(() => {
+            const checkInterval = setInterval(async () => {
+                const vic = this.check_for_win(id);
+                if (vic !== null) {
+                    clearInterval(checkInterval);
+                    resolve(vic);
+                }
                 if (this.is_your_turn(id) && this.is_full()) {
                     clearInterval(checkInterval);
-                    resolve(ResCode.YourTurn);
+                    const code = await this.players[id].check_4_dead();
+                    if (code === ResCode.Defeat) {
+                        this.loser = id;
+                    }
+                    resolve(code);
                 }
             }, TURN_POLL);
 
