@@ -6,16 +6,27 @@ import { useNavigate } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
 
 function GameInterface() {
-  console.log("GameInterface");
-  const [players, setPlayers] = useState([]);
-  const [to_move, setToMove] = useState(0);
-  const [next_to_move, setNextToMove] = useState(0);
+  const [players, setPlayers] = useState(() => {
+    const storedPlayers = localStorage.getItem("players");
+    return storedPlayers ? JSON.parse(storedPlayers) : [];
+  });
+  const [to_move, setToMove] = useState(() => {
+    const storedToMove = localStorage.getItem("to_move");
+    return storedToMove ? parseInt(storedToMove, 10) : null;
+  });
+  const [next_to_move, setNextToMove] = useState(() => {
+    const storedNextToMove = localStorage.getItem("next_to_move");
+    return storedNextToMove ? parseInt(storedNextToMove, 10) : null;
+  });
   const [gameNumber, setGameNumber] = useState(
     window.location.pathname.split("/").pop()
   );
-  const [id, setId] = useState(localStorage.getItem("user_id"));
-  const [playerIndex, setPlayerIndex] = useState();
-  const [otherPlayerIndex, setOtherPlayerIndex] = useState();
+  const [id, setId] = useState(() => {
+    const storedId = localStorage.getItem("user_id");
+    return storedId ? parseInt(storedId, 10) : null;
+  });
+  const [playerIndex, setPlayerIndex] = useState(null);
+  const [otherPlayerIndex, setOtherPlayerIndex] = useState(null);
   const navigate = useNavigate();
   const [actions, setActions] = useState([
     { name: "Attack" },
@@ -165,43 +176,29 @@ function GameInterface() {
         clearTimeout(timeoutId); // Ensure to clear the timeout if an error occurs
         if (error.name === "AbortError") {
           console.error("Fetch aborted due to timeout");
-          alert("Request timed out. Please try again.");
+          // alert("Request timed out. Please try again.");
+          handleWaitForOtherPlayer(); // Recursive call to wait again
         } else {
-          alert(error);
+          // alert(error);
           console.error("Fetch error:", error);
+          handleWaitForOtherPlayer(); // Recursive call to wait again
         }
       });
   };
 
 
-
+  useEffect(() => {
+    if (players.length > 0 && id !== null) {
+      const foundIndex = players.findIndex((player) => player.id === id);
+      const foundOtherIndex = players.findIndex((player) => player.id !== id);
+  
+      setPlayerIndex(foundIndex >= 0 ? foundIndex : null);
+      setOtherPlayerIndex(foundOtherIndex >= 0 ? foundOtherIndex : null);
+    }
+  }, [players, id]);
 
   useEffect(() => {
     try {
-      const storedPlayers = localStorage.getItem("players");
-      if (storedPlayers) {
-        const parsedPlayers = JSON.parse(storedPlayers);
-        setPlayers(parsedPlayers);
-        console.log("Parsed Players:", parsedPlayers);
-      }
-
-      setPlayerIndex(players.findIndex((player) => player.id === id));
-      setPlayerIndex(parseInt(playerIndex, 10));
-      console.log("Player Index:", playerIndex);
-
-      setOtherPlayerIndex(players.findIndex((player) => player.id !== id));
-      setOtherPlayerIndex(parseInt(otherPlayerIndex, 10));
-      console.log("Other Player Index:", otherPlayerIndex);
-
-
-
-      const toMove = 
-      setToMove(localStorage.getItem("to_move"));
-      console.log("To Move:", to_move);
-
-      const nextToMove = localStorage.getItem("next_to_move");
-      setNextToMove(nextToMove);
-      console.log("Next to Move:", next_to_move);
 
       if (localStorage.getItem("paragraph_data")) {
         const data = JSON.parse(localStorage.getItem("paragraph_data"));
@@ -299,7 +296,7 @@ function GameInterface() {
             <div className="flex flex-wrap justify-center items-center">
 
 
-              {to_move !== id ? (
+              {to_move === id ? (
                 <>
                   {actions.map((action, index) => (
                     <button
