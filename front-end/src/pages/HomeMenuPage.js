@@ -16,7 +16,7 @@ const HomeMenu = () => {
       });
       const data = await response.json();
       console.log(data);
-      localStorage.setItem("user_id", data.user_id);
+      localStorage.setItem("user_id", data.id);
     } catch (error) {
       console.error("Error fetching data:", error);
       // remove tokens and redirect to login
@@ -38,9 +38,9 @@ const HomeMenu = () => {
       const response = fetch("/logout", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${access_token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ id: 1 }),
       });
       console.log(response);
       if (response === 200) {

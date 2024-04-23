@@ -5,6 +5,7 @@ const JoinGamePage = () => {
   const [gameNumber, setGameNumber] = useState("");
   const navigate = useNavigate();
   const handleJoinGame = () => {
+    const user_ID = localStorage.getItem("user_id");
     const gameNumberInt = parseInt(gameNumber, 10);
     console.log(gameNumberInt);
     // Make a request to the server to join the game
@@ -13,7 +14,7 @@ const JoinGamePage = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id: 2, gameNumber: gameNumberInt }),
+      body: JSON.stringify({ id: user_ID, gameNumber: gameNumberInt }),
     })
       .then((response) => {
         if (response.status === 200) {
