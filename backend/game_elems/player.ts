@@ -100,8 +100,6 @@ class Player {
     // Checks if a particular monster id is in the player's bench
     private is_in_bench(id: number): boolean { return this.monsters_bench.some(m_id => m_id === id) }
 
-    public update_id(id: number) { this.id = id }
-
 
     /////////////////////////////////////////////
     //         USER LEVEL AND XP MANIP         //
@@ -125,17 +123,7 @@ class Player {
         this.level += 1;
 
         if (this.level % 5 === 0) {
-            const monster = new Monster("", -1, 1, 0, 100, 1, MonsterType.Legendary);
-
-            let m_id: number = await new_monster(this.id, monster);
-
-            monster.id = m_id;
-
-            if (this.current_monster === null) {
-                this.current_monster = monster;
-            }
-
-            this.add2bench(this.add2roster(m_id));
+            await this.new_monster("");
         }
 
         this.increase_xp(xp - level_up_xp);
@@ -216,6 +204,20 @@ class Player {
     /////////////////////////////////////////////
 
     // NOTE: if any of these functions have null as an input, they do nothing
+
+    public async new_monster(name: string) {
+        const monster = new Monster(name, -1, 1, 0, 100, 1, MonsterType.Legendary);
+
+        let m_id: number = await new_monster(this.id, monster);
+
+        monster.id = m_id;
+
+        if (this.current_monster === null) {
+            this.current_monster = monster;
+        }
+
+        this.add2bench(this.add2roster(m_id));
+    }
 
     // This function adds a monster's id to the player's roster of monsters
     // Returns null if the monster's id was added successfully
