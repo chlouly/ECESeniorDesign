@@ -100,6 +100,8 @@ class Player {
     // Checks if a particular monster id is in the player's bench
     private is_in_bench(id: number): boolean { return this.monsters_bench.some(m_id => m_id === id) }
 
+    public update_id(id: number) { this.id = id; }
+
 
     /////////////////////////////////////////////
     //         USER LEVEL AND XP MANIP         //
@@ -217,6 +219,8 @@ class Player {
         }
 
         this.add2bench(this.add2roster(m_id));
+
+        return;
     }
 
     // This function adds a monster's id to the player's roster of monsters

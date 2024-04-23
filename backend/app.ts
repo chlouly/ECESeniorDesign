@@ -63,18 +63,6 @@ let random_players = new MatchQueue;
 // Matches that are currently active
 let matches: { [key: number]: Match } = {};
 
-/*
-      TESTING DATA
-*/
-let chris: Player = new Player("Chris", 1, [], [], [], null, 1000, 0);
-online[chris.get_id()] = chris;
-
-let mateusz: Player = new Player("Mateusz", 2, [], [], [], null, 2, 0);
-online[mateusz.get_id()] = mateusz;
-
-let santi: Player = new Player("Santi", 3, [], [], [], null, 2, 0);
-online[santi.get_id()] = santi;
-
 
 //create storage using multer 
 export const storage_pdf = multer.diskStorage({
@@ -220,7 +208,6 @@ app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
   player = new Player("", -1, [], [], [], null, 1, 0);
 
   // Giving the player a starter monster
-  player.new_monster("");
   console.log(player);
 
   // Adding the player to the DB
@@ -229,16 +216,18 @@ app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
   console.log(code);
 
   // Insertion failed
-  if (code !== ResCode.Ok) {
+  if (isResCode(code)) {
     return res.status(code).end();
   }
 
   // Re fetch player (this gets the correct ID)
-  player = await fetch_player(userId);
+  player.update_id(code);
 
   if (isResCode(player)) {
     return res.status(player).end();
   }
+
+  await player.new_monster("");
 
   // Put the player in the online dict
   online[player.get_id()] = player;

@@ -18,7 +18,7 @@ async function new_player(player: Player, auth: string): Promise<ResCode> {
     `;
 
     const query2 = `
-        INSERT INTO ${USER_TABLE_NAME} (id, name, level, xp, cur_egg, cur_m_id, roster, bench, eggs)
+        INSERT INTO ${USER_TABLE_NAME} (id, name, level, xp, cur_egg, cur_m_id, monsters_roster, monsters_bench, eggs)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id;  -- This will return the new monster's ID after insertion
     `;
@@ -59,7 +59,7 @@ async function new_player(player: Player, auth: string): Promise<ResCode> {
             return ResCode.RDSErr;
         }
 
-        return ResCode.Ok;
+        return id;
     } catch (error) {
         logger.error('Error Manipulating RDS DB -- new_player():', error);
         return ResCode.RDSErr;
@@ -73,7 +73,7 @@ async function update_player(player: Player): Promise<ResCode> {
     const client = await get_rds_connection();
     const query = `
         UPDATE ${USER_TABLE_NAME}
-        SET name = $2, level = $3, xp = $4, cur_m_id = $5, cur_egg = $6, roster = $7, bench = $8, eggs = $9
+        SET name = $2, level = $3, xp = $4, cur_m_id = $5, cur_egg = $6, monsters_roster = $7, monsters_bench = $8, eggs = $9
         WHERE id = $1
     `;
 
