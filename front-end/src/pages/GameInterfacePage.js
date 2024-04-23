@@ -318,32 +318,25 @@ function GameInterface() {
 
         {/* Monsters Section */}
         <div className="flex flex-row space-x-4 mt-4 justify-center">
-          {players.length > 0 && players[0].monster_bench != null ? (
-            players[playerIndex].monsters_roster.map((monster, index) => (
-              <div key={index} className="flex flex-col items-center space-y-2">
-                {monster != null ? (
-                  <>
-                    <img
-                      src={monster.image} // Assuming `image` is the correct key for monster image URL
-                      alt={`Monster ${monster.id}`}
-                      className="object-cover rounded-lg shadow"
-                    />
-                    <p className="text-blue-700">{monster.name}</p> {/* Assuming you want to display monster's name */}
-                  </>
-                ) : (
-                  <>
-                    <ClipLoader color={"#000"} loading={true} size={50} />
-                    <p className="text-blue-700">Loading Monster...</p>
-                  </>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="flex flex-col items-center space-y-2">
-              <ClipLoader color={"#000"} loading={true} size={50} />
-              <p className="text-blue-700">Loading Monsters...</p>
+        {players.length > 0 && players[playerIndex] != null && players[playerIndex].monsters_roster != null ? (
+        <div className="flex flex-col items-center space-y-2">
+          {console.log (players[playerIndex].monsters_roster)}
+          {players[playerIndex].monsters_roster.map((monsterIndex) => (
+            <div key={monsterIndex} className="text-center">
+              <p>Monster Index: {monsterIndex}</p>
+              {/* Uncomment below to add more details if available */}
+              {/* <img src={monster.image} alt={`Monster ${monster.name}`} className="object-cover rounded-lg shadow" />
+              <p className="text-blue-700">{monster.name}</p> */}
             </div>
-          )}
+          ))}
+        </div>
+      ) : (
+        <>
+        <ClipLoader color={"#000"} loading={true} size={50} />
+        <p className="text-blue-700">Loading Monster...</p>
+      </>
+      )}
+
         </div>
 
 
@@ -370,7 +363,7 @@ function GameInterface() {
             />
             <div className="bg-blue-100 rounded-lg shadow p-2 text-center mt-2 w-full">
               <p className="text-blue-800 font-semibold">Opponent Monster:</p>
-              {players.length > 0 && players[otherPlayerIndex] != null && players[otherPlayerIndex].current_monster != null ? (
+              {players.length > 1 && players[otherPlayerIndex] != null && players[otherPlayerIndex].current_monster != null ? (
                 <>
                   <p className="text-blue-700">{players[otherPlayerIndex].current_monster.name}</p>
                   <p className="text-blue-700">Level: {players[otherPlayerIndex].current_monster.level}</p>
