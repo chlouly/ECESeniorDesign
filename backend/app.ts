@@ -19,8 +19,6 @@ import { fetch_monster, fetch_player, new_egg, new_player } from './rds_actions'
 
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 
-dotenv.config();
-
 const verifier = CognitoJwtVerifier.create({
   userPoolId: 'us-east-1_ZyFvL3MUy',
   tokenUse: 'access',
@@ -31,6 +29,7 @@ interface DecodedToken {
   sub: string; // Cognito uses 'sub' as the user ID
   [key: string]: any; // Additional claims
 }
+
 
 const pool = mysql.createPool({
   connectionLimit: 10,
@@ -87,6 +86,26 @@ export const storage_pdf = multer.diskStorage({
     callback(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
   },
 });
+
+
+
+const validateJwt = async (req: Request, res: Response, next: NextFunction) => {
+  const { authorization } = req.headers;
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return res.status(401).send('Authorization header must be provided and must start with Bearer');
+  }
+
+  const token = authorization.split(' ')[1];
+  try {
+    const payload = await verifier.verify(token); // Verifies the token
+    console.log("Token is valid. Payload:", payload);
+    (req as any).user = payload; // Store payload in request
+    next(); // Proceed to next middleware or route handler
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    res.status(401).send("Token not valid!");
+  }
+};
 
 
 const app = express();
@@ -193,32 +212,20 @@ app.delete('/logout', validateJwt, (req: Request, res: Response) => {
 // Various ResCodes are returned on failure.
 // The Player Data with either ResCode.LoginSuc or ResCode.SignUpSuc status
 // is returned on success.
-
-
 app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
-  const user = (req as any).user as DecodedToken; // Use type assertion here
-  if (user) {
-    console.log('User info:', user);
-  } else {
-    res.status(401).send('No user information available');
-  }
-  const user_sub = user.sub;
-  // MAPPING USER SUB TO ID
-  const userId = "1";
-
-  let p_id = parseInt(userId);
-
-  if (isNaN(p_id)) {
-    return res.status(ResCode.PIDNaN);
+  const user = (req as any).user as DecodedToken;
+  const userId = user.sub;
+  if (!userId) {
+    return res.status(ResCode.PIDUndef);
   }
 
   // Attempt to retrieve player object
-  let player: Player | ResCode = await fetch_player(p_id);
+  let player: Player | ResCode = await fetch_player(userId);
 
   // Player was found
   if (!isResCode(player)) {
     // Put the player in the online dict
-    online[p_id] = player;
+    online[player.get_id()] = player;
 
     // Return Player Data
     return res.status(ResCode.LoginSuc).json(player.get_data());
@@ -229,18 +236,26 @@ app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
   }
 
   // At this point the player did not exist, so we make a new one
-  player = new Player("", p_id, [], [], [], null, 1, 0);
+  player = new Player("", -1, [], [], [], null, 1, 0);
 
   // Adding the player to the DB
-  const code = await new_player(player)
+  const code = await new_player(player, userId)
 
   // Insertion failed
   if (code !== ResCode.Ok) {
     return res.status(code).end();
   }
 
+  // Re fetch player (this gets the correct ID)
+  player = await fetch_player(userId);
+
+  if (isResCode(player)) {
+    return res.status(player).end();
+  }
+
   // Put the player in the online dict
-  online[p_id] = player;
+  online[player.get_id()] = player;
+
 
   // Return Player Data
   return res.status(ResCode.SignUpSuc).json(player.get_data());
