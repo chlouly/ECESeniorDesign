@@ -2,7 +2,7 @@ import express = require('express');
 import { Request, Response, NextFunction } from 'express';
 import * as dotenv from 'dotenv';
 import { logger } from "./logger";
-import { setup_rds_tables } from "./rds_config";
+import { clear_db, setup_rds_tables } from "./rds_config";
 import { Player, Difficulty, Action, validActions } from "./game_elems/player";
 import { MatchQueue, Match } from './game_elems/match';
 import { Monster } from './game_elems/monster';
@@ -39,7 +39,8 @@ const pool = mysql.createPool({
   database: 'mydatabase'
 });
 
-setup_rds_tables();
+//setup_rds_tables();
+clear_db();
 
 // uploaf file using multer
 declare global {
@@ -61,18 +62,6 @@ let random_players = new MatchQueue;
 
 // Matches that are currently active
 let matches: { [key: number]: Match } = {};
-
-/*
-      TESTING DATA
-*/
-let chris: Player = new Player("Chris", 1, [], [], [], null, 1000, 0);
-online[chris.get_id()] = chris;
-
-let mateusz: Player = new Player("Mateusz", 2, [], [], [], null, 2, 0);
-online[mateusz.get_id()] = mateusz;
-
-let santi: Player = new Player("Santi", 3, [], [], [], null, 2, 0);
-online[santi.get_id()] = santi;
 
 
 //create storage using multer 
@@ -153,15 +142,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
 //
 // Saves a player's state to the database and removes them
 // from the 'online' dictionary
-app.delete('/logout', validateJwt, (req: Request, res: Response) => {
-
-  const user_sub = (req as any).user.sub;
-  // MAPPING USER SUB TO ID
-  const user_id = 1
-  if (user_id === undefined) {
-    return res.status(ResCode.NoBody).end();
-  }
-
+app.delete('/logout', (req: Request, res: Response) => {
   // Parse for errors
   let code: ResCode = validate_match_ins(req.body.id, null, null, null);
   if (code !== ResCode.Ok) {
@@ -226,6 +207,7 @@ app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
   // At this point the player did not exist, so we make a new one
   player = new Player("", -1, [], [], [], null, 1, 0);
 
+  // Giving the player a starter monster
   console.log(player);
 
   // Adding the player to the DB
@@ -234,16 +216,18 @@ app.post('/new_user', validateJwt, async (req: Request, res: Response) => {
   console.log(code);
 
   // Insertion failed
-  if (code !== ResCode.Ok) {
+  if (isResCode(code)) {
     return res.status(code).end();
   }
 
   // Re fetch player (this gets the correct ID)
-  player = await fetch_player(userId);
+  player.update_id(code);
 
   if (isResCode(player)) {
     return res.status(player).end();
   }
+
+  await player.new_monster("");
 
   // Put the player in the online dict
   online[player.get_id()] = player;
