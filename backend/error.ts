@@ -36,6 +36,7 @@ export enum ResCode {
     ActionNotPermitted = 542,   // Can not complete the desired action
     InvalidAction = 543,        // Not a real action
     SwapWoutMID = 544,          // Attempted to swap without providing an MID
+    MonsterDead = 545,          // Tried to swap for a dead monster
 
     // 550s are to do with matches
     MtchUndef = 550,            // Game Number Field was undefined

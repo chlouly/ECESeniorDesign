@@ -12,8 +12,6 @@ import { logger } from '../logger';
 const NUM_MONSTERS_ROSTER: number = 6;
 const NUM_MONSTERS_BENCH: number = 120;
 const NUM_EGGS = 20;
-const MIN_DAMAGE = 2;
-const MAX_DAMAGE = 99;
 
 enum Difficulty {
     Easy = "EASY",
@@ -169,7 +167,9 @@ class Player {
         const my_lvl = this.current_monster.level;
         const op_lvl = opponent.current_monster.level;
 
-        const dmg = (my_lvl - op_lvl + 100 + MIN_DAMAGE)
+        const dmg = (my_lvl - op_lvl + 100) / 2
+
+        opponent.current_monster.take_dmg(dmg);
 
         return ResCode.Ok;
     }
@@ -197,8 +197,10 @@ class Player {
             return monster;
         }
 
-        // Remove this id from the list
-        this.monsters_roster = this.monsters_roster.filter(id => { return id !== m_id; });
+        // If the desired monster is dead, dont let them switch
+        if (monster.alive === false) {
+            return ResCode.MonsterDead;
+        }
 
         // Add the old monster to the list and save its info (if it was there to begin with)
         if (this.current_monster !== null) {
