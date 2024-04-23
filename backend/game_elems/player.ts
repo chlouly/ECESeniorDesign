@@ -12,8 +12,6 @@ import { logger } from '../logger';
 const NUM_MONSTERS_ROSTER: number = 6;
 const NUM_MONSTERS_BENCH: number = 120;
 const NUM_EGGS = 20;
-const MIN_DAMAGE = 2;
-const MAX_DAMAGE = 99;
 
 enum Difficulty {
     Easy = "EASY",
@@ -128,7 +126,7 @@ class Player {
         this.level += 1;
 
         if (this.level % 5 === 0) {
-            await this.new_monster("");
+            await this.new_monster();
         }
 
         this.increase_xp(xp - level_up_xp);
@@ -169,7 +167,9 @@ class Player {
         const my_lvl = this.current_monster.level;
         const op_lvl = opponent.current_monster.level;
 
-        const dmg = (my_lvl - op_lvl + 100 + MIN_DAMAGE)
+        const dmg = (my_lvl - op_lvl + 100) / 2
+
+        opponent.current_monster.take_dmg(dmg);
 
         return ResCode.Ok;
     }
@@ -197,8 +197,10 @@ class Player {
             return monster;
         }
 
-        // Remove this id from the list
-        this.monsters_roster = this.monsters_roster.filter(id => { return id !== m_id; });
+        // If the desired monster is dead, dont let them switch
+        if (monster.alive === false) {
+            return ResCode.MonsterDead;
+        }
 
         // Add the old monster to the list and save its info (if it was there to begin with)
         if (this.current_monster !== null) {
@@ -220,8 +222,8 @@ class Player {
 
     // NOTE: if any of these functions have null as an input, they do nothing
 
-    public async new_monster(name: string) {
-        const monster = new Monster(name, -1, 1, 0, 100, 1, MonsterType.Legendary);
+    public async new_monster() {
+        const monster = new Monster(get_rand_name(), -1, 1, 0, 100, 1, MonsterType.Legendary);
 
         let m_id: number = await new_monster(this.id, monster);
 
@@ -265,13 +267,25 @@ class Player {
     // Removes a monster with a particular id from the roster
     // Returns the monster's id on success and null on failure
     public remove_from_roster(id: number | null): number | null {
-        return null;
+        if (id === null || !this.is_in_roster(id)) {
+            return null;
+        }
+
+        this.monsters_roster = this.monsters_roster.filter((m_id) => { return m_id !== id });
+
+        return id;
     }
 
     // Removes a monster with a particular id from the bench
     // Returns the monster's id on success and null on failure
     public remove_from_bench(id: number | null): number | null {
-        return null;
+        if (id === null || !this.is_in_bench(id)) {
+            return null;
+        }
+
+        this.monsters_bench = this.monsters_bench.filter((m_id) => { return m_id !== id });
+
+        return id;
     }
     
     // Takes a monster's id and moves it from the bench to the roster
@@ -416,6 +430,31 @@ function player2row(player: Player): PlayerRow {
         level: player.get_level(),
         xp: player.get_xp()  
     }
+}
+
+// MONSTER NAMES
+const names: string[] = [
+    "Hydriath", "Zargothrax", "Venombane", "Skullcrusher", "Nightmara", 
+    "Frostfang", "Shadowrend", "Moltenclaw", "Ironmaw", "Stormbringer", 
+    "Razorwing", "Darkwhisper", "Flameveil", "Thunderhowl", "Netherwrath", 
+    "Grimspine", "Voidstalker", "Bloodscorn", "Starvortex", "Ebonlight", 
+    "Crystalgaze", "Firepeak", "Glaciermaw", "Obsidiart", "Whisperfang", 
+    "Doomwhirl", "Frostveil", "Shadowflare", "Silvervein", "Stormshard", 
+    "Terravore", "Blightwalker", "Moonstalker", "Abyssfury", "Celesticlaw", 
+    "Direfrost", "Hellion", "Infernix", "Manacrusher", "Nemesis", 
+    "Oblivion", "Phantom", "Ragnarok", "Spectre", "Titan", 
+    "Umbra", "Valkyrie", "Wraith", "Xenomorph", "Yeti", 
+    "Zenith", "Aethershock", "Banelord", "Cataclysm", "Drakeheart", 
+    "Etherwing", "Fablestrike", "Ghoulfang", "Havoc", "Impaler", 
+    "Juggernaut", "Kraken", "Leviathan", "Manticore", "Necro", 
+    "Ogre", "Pyroclast", "Quicksilver", "Riftwalker", "Savage", 
+    "Terror", "Undying"
+];
+
+function get_rand_name(): string {
+    const randomIndex = Math.floor(Math.random() * names.length);
+
+    return names[randomIndex];
 }
 
 export { 
