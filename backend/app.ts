@@ -586,53 +586,6 @@ app.post('/waittomove', async (req: Request, res: Response) => {
   return res.status(wait_code).json(match.get_data());
 });
 
-//////////////////////////////////////////////////////////////////
-// THis endpoint takes a monster from the roster and a monster from
-// the bench and swaps them. If either of the monster IDs are -1,
-// then the endpoint will essentially move one monster from one list
-// to the other.
-//
-// body: {
-//   "id": PLAYER ID NUMBER,
-//   "roster_id": MONSTER ID - ROSTER (-1 when not selected)
-//   "bench_id": MONSTER ID - BENCH (-1 when not selected)
-// }
-app.post('/swapmonsters', async (req: Request, res: Response) => {
-  // Making sure the body exists
-  if (req.body === undefined) {
-    return res.status(ResCode.NoBody).end();
-  }
-
-  let code: ResCode = validate_match_ins(req.body.id, req.body.roster_id, null, null);
-  if (code !== ResCode.Ok) {
-    return res.status(code).end();
-  }
-
-  code = validate_match_ins(null, req.body.bench_id, null, null);
-  if (code !== ResCode.Ok) {
-    return res.status(code).end();
-  }
-
-  const p_id = req.body.id;
-  const r_id = req.body.roster_id;
-  const b_id = req.body.bench_id;
-
-  // Getting Player object
-  const player: Player | undefined = online[p_id];
-
-  // Player is not online
-  if (player === undefined) {
-    return res.status(ResCode.NotFound).end();
-  }
-
-  let ret: boolean = player.swap_monsters(
-    (b_id === -1)? null : b_id,
-    (r_id === -1)? null : r_id
-  );
-
-  return res.status(ret? ResCode.Ok : ResCode.GnrlErr).json(player.get_data());
-});
-
 
 //////////////////////////////////////////////////////////
 // Lets a player leave a match

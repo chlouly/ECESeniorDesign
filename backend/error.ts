@@ -9,8 +9,6 @@ export enum ResCode {
     YourTurn = 210,             // Your turn to move
     LoginSuc = 211,             // Successful Player Login
     SignUpSuc = 212,            // Successful in signing up
-    Victory = 213,              // You have won the match!
-    Defeat = 214,               // You have lost the match :(
 
     // Answers (returned in the /action endpoint)
     Correct = 220,              // The provided answer was correct and the endpoint returned successfully

@@ -198,7 +198,7 @@ class Player {
         }
 
         // If the desired monster is dead, dont let them switch
-        if (monster.is_alive() === false) {
+        if (monster.alive === false) {
             return ResCode.MonsterDead;
         }
 
@@ -236,41 +236,6 @@ class Player {
         this.add2bench(this.add2roster(m_id));
 
         return;
-    }
-
-    public async check_4_dead(): Promise<ResCode> {
-        if (this.current_monster === null || !this.current_monster.is_alive()) {
-            return await this.get_next_alive()
-        }
-
-        return ResCode.YourTurn;
-    }
-
-    public async get_next_alive(): Promise<ResCode> {
-        for (var id of this.monsters_roster) {
-            // Skip the current monster
-            if (this.current_monster !== null && this.current_monster.id === id) {
-                continue;
-            }
-
-            // Get the monster from DB
-            const monster: Monster | ResCode = await fetch_monster(this.id, id);
-
-            // Check if it failed
-            if (isResCode(monster)) {
-                return monster;
-            }
-
-            // We have found a monster that isnt dead
-            if (monster.is_alive()) {
-                this.current_monster?.save2db(this.id);
-                this.current_monster = monster;
-                return ResCode.YourTurn;
-            }
-        }
-
-        // Out of monsters, you have lost
-        return ResCode.Defeat;
     }
 
     // This function adds a monster's id to the player's roster of monsters
@@ -339,7 +304,7 @@ class Player {
 
     // Swaps the position of two monsters's ids, one in the bench and one in the roster
     // Returns false if the swap fails and true if it succeeds.
-    public swap_monsters(bench_id: number | null, roster_id: number | null): boolean {
+    swap_monsters(bench_id: number | null, roster_id: number | null): boolean {
         const bench_mon: number | null = this.remove_from_bench(bench_id);
         if (bench_mon === null && bench_id !== null) { 
             return false;

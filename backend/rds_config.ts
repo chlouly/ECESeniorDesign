@@ -70,7 +70,6 @@ async function setup_rds_tables() {
       xp INT,
       ev_num INT,
       type INT,
-      health INT,
       FOREIGN KEY (user_id) REFERENCES ${COGNITO_TABLE_NAME}(id)
     );
 
