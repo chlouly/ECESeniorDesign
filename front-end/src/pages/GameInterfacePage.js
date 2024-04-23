@@ -13,6 +13,9 @@ function GameInterface() {
   const [gameNumber, setGameNumber] = useState(
     window.location.pathname.split("/").pop()
   );
+  const [id, setId] = useState(localStorage.getItem("user_id"));
+  const [playerIndex, setPlayerIndex] = useState();
+  const [otherPlayerIndex, setOtherPlayerIndex] = useState();
   const navigate = useNavigate();
   const [actions, setActions] = useState([
     { name: "Attack" },
@@ -116,14 +119,14 @@ function GameInterface() {
   const handleWaitForOtherPlayer = () => {
     let user_ID = localStorage.getItem("user_id");
     user_ID = parseInt(user_ID, 10);
-  
+
     // Create an AbortController instance
     const controller = new AbortController();
     const signal = controller.signal;
-  
+
     // Set a timeout to abort the fetch request after 5 minutes
     const timeoutId = setTimeout(() => controller.abort(), 300000); // 300,000 ms = 5 minutes
-  
+
     fetch("/waittomove", {
       method: "POST",
       headers: {
@@ -134,7 +137,7 @@ function GameInterface() {
     })
       .then((response) => {
         clearTimeout(timeoutId); // Clear the timeout on receiving a response
-  
+
         if (response.status === 210) {
           console.log("Other player has moved");
           return response.json(); // Parse JSON only if the status is 210
@@ -149,6 +152,13 @@ function GameInterface() {
       .then((data) => {
         if (data) {
           console.log("Move data received:", data);
+          setPlayers(data.players);
+          localStorage.setItem("players", JSON.stringify(data.players));
+          setToMove(data.to_move);
+          localStorage.setItem("to_move", data.to_move);
+          setNextToMove(data.next_to_move);
+          localStorage.setItem("next_to_move", data.next_to_move);
+
         }
       })
       .catch((error) => {
@@ -162,9 +172,9 @@ function GameInterface() {
         }
       });
   };
-  
-  
-  
+
+
+
 
   useEffect(() => {
     try {
@@ -175,8 +185,18 @@ function GameInterface() {
         console.log("Parsed Players:", parsedPlayers);
       }
 
-      const toMove = localStorage.getItem("to_move");
-      setToMove(toMove);
+      setPlayerIndex(players.findIndex((player) => player.id === id));
+      setPlayerIndex(parseInt(playerIndex, 10));
+      console.log("Player Index:", playerIndex);
+
+      setOtherPlayerIndex(players.findIndex((player) => player.id !== id));
+      setOtherPlayerIndex(parseInt(otherPlayerIndex, 10));
+      console.log("Other Player Index:", otherPlayerIndex);
+
+
+
+      const toMove = 
+      setToMove(localStorage.getItem("to_move"));
       console.log("To Move:", to_move);
 
       const nextToMove = localStorage.getItem("next_to_move");
@@ -236,7 +256,7 @@ function GameInterface() {
           </div>
         </div>
       </div>
-      
+
       {/* Monster 1 Section */}
       <div className="flex col-span-1 row-span-2 flex-col items-center  justify-center">
         <img
@@ -245,12 +265,13 @@ function GameInterface() {
           className="object-cover rounded-lg shadow"
         />
         <div className="bg-blue-100 rounded-lg shadow p-2 text-center mt-2 w-full">
-          <p className="text-blue-800 font-semibold">HEALTH: 100</p>
-          {players.length > 0 ? (
+          <p className="text-blue-800 font-semibold">Your Monster:</p>
+          { players.length > 0 && players[playerIndex] != null  && players[playerIndex].current_monster != null ? (
             <>
-              <p className="text-blue-700">{players[0].name}</p>
-              <p className="text-blue-700">Level: {players[0].level}</p>
-              <p className="text-blue-700">XP: {players[0].xp}</p>
+              <p className="text-blue-700">{players[playerIndex].current_monster.name}</p>
+              <p className="text-blue-700">Level: {players[playerIndex].current_monster.level}</p>
+              <p className="text-blue-700">XP: {players[playerIndex].current_monster.xp}</p>
+              <p className="text-blue-700">Health: {players[playerIndex].current_monster.health}</p>
             </>
           ) : (
             <ClipLoader color={"#000"} loading={true} size={50} />
@@ -259,37 +280,58 @@ function GameInterface() {
       </div>
       {/* MENU */}
       <div className="col-span-2 bg-blue-100 rounded-lg shadow p-4 mt-4 relative">
-        <p className="text-blue-800 font-semibold mb-2">Choose an action:</p>
-        <div className=" items-center space-x-4">
-          {actions.map((action, index) => (
-            <button
-              key={index}
-              className={`px-4 py-2 rounded-lg shadow bg-green-500 hover:bg-green-600" text-white w-1/5`}
-              onClick={() => {
-                handleActionClick(action);
-              }}
-            >
-              {action.name}
-            </button>
-          ))}
+        <div className="flex divide-x divide-blue-300">
+          {/* Player Stats Section */}
+          <div className="flex-1 p-2">
+            <p className="text-blue-800 font-semibold mb-2">Player Stats:</p>
+            {players.length > 0 && players[playerIndex] != null && (
+              <>
+                <p className="text-blue-700">{players[playerIndex].name}</p>
+                <p className="text-blue-700">Level: {players[playerIndex].level}</p>
+                <p className="text-blue-700">XP: {players[playerIndex].xp}</p>
+              </>
+            )}
+          </div>
+
+          {/* Actions Section */}
+          <div className="flex-1 p-2">
+            <p className="text-blue-800 font-semibold mb-2">Choose an action:</p>
+            <div className="flex flex-wrap justify-center items-center">
+
+
+              {to_move !== id ? (
+                <>
+                  {actions.map((action, index) => (
+                    <button
+                      key={index}
+                      className="px-4 py-2 m-1 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white w-1/3"
+                      onClick={() => handleActionClick(action)}
+                    >
+                      {action.name}
+                    </button>
+                  ))}
+                </>) : (
+                <p className="text-blue-700">Wait Opponent's Turn</p>
+              )}
+
+
+            </div>
+          </div>
         </div>
-        {/* Display five monter in a row from players[0].monster_bench */}
-        <div className="flex flex-row space-x-4 mt-8 justify-center">
+
+        {/* Monsters Section */}
+        <div className="flex flex-row space-x-4 mt-4 justify-center">
           {players.length > 0 && players[0].monster_bench != null ? (
-            players[0].monster_bench.map((monster, index) => (
+            players[playerIndex].monsters_roster.map((monster, index) => (
               <div key={index} className="flex flex-col items-center space-y-2">
-                {monster == null ? (
+                {monster != null ? (
                   <>
                     <img
-                      src={monster1}
-                      alt="Monster 1"
+                      src={monster.image} // Assuming `image` is the correct key for monster image URL
+                      alt={`Monster ${monster.id}`}
                       className="object-cover rounded-lg shadow"
                     />
-                    <p className="text-blue-700">{monster.name}</p>
-                    <p className="text-blue-700">Level: {monster.level}</p>
-                    <p className="text-blue-700">XP: {monster.xp}</p>
-                    <p className="text-blue-700">Health: {monster.health}</p>
-                    <p className="text-blue-700">Type: {monster.type}</p>
+                    <p className="text-blue-700">{monster.name}</p> {/* Assuming you want to display monster's name */}
                   </>
                 ) : (
                   <>
@@ -306,6 +348,8 @@ function GameInterface() {
             </div>
           )}
         </div>
+
+
 
         <div className="absolute bottom-0 right-0 bg-white p-4 rounded-lg shadow space-y-4">
           <p className="text-gray-800 font-semibold">
@@ -328,10 +372,17 @@ function GameInterface() {
               className="object-cover rounded-lg shadow"
             />
             <div className="bg-blue-100 rounded-lg shadow p-2 text-center mt-2 w-full">
-              <p className="text-blue-800 font-semibold">HEALTH: 100</p>
-              <p className="text-blue-700">{players[1].name}</p>
-              <p className="text-blue-700">Level: {players[1].level}</p>
-              <p className="text-blue-700">XP: {players[1].xp}</p>
+              <p className="text-blue-800 font-semibold">Opponent Monster:</p>
+              {players.length > 0 && players[otherPlayerIndex] != null && players[otherPlayerIndex].current_monster != null ? (
+                <>
+                  <p className="text-blue-700">{players[otherPlayerIndex].current_monster.name}</p>
+                  <p className="text-blue-700">Level: {players[otherPlayerIndex].current_monster.level}</p>
+                  <p className="text-blue-700">XP: {players[otherPlayerIndex].current_monster.xp}</p>
+                  <p className="text-blue-700">Health: {players[otherPlayerIndex].current_monster.health}</p>
+                </>
+              ) : (
+                <ClipLoader color={"#000"} loading={true} size={50} />
+              )}
             </div>
           </>
         ) : (
