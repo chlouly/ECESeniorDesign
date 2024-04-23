@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 
+function generateImageUrl (index) {
+  return `https://seniordesign-s3.s3.amazonaws.com/${index}.png;`
+}
+
 const ChooseTeamPage = () => {
   const [team, setTeam] = useState("");
   const [bench, setBench] = useState([]);
@@ -62,8 +66,11 @@ const ChooseTeamPage = () => {
                   onClick={() => {
                     selectedRoster(index);
                   }}
+                  
+                  className={`${selectedRoster === index ? "border-4 border-blue-500" : ""}`}
                 >
-                  {index}
+                  <img src={generateImageUrl(index)} alt="Monster" />
+                  
                 </button>
               </div>
             ))}
