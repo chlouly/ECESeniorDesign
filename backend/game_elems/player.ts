@@ -260,8 +260,19 @@ class Player {
         return;
     }
 
+    private add_2_dead(id: number) {
+        if (this.monsters_dead.includes(id)) {
+            return;
+        }
+
+        this.monsters_dead.push(id);
+    }
+
     public async check_4_dead(): Promise<ResCode> {
-        if (this.current_monster === null || !this.current_monster.is_alive()) {
+        if (this.current_monster === null) {
+            return await this.get_next_alive()
+        } else if (!this.current_monster.is_alive()) {
+            this.add_2_dead(this.current_monster.id);
             return await this.get_next_alive()
         }
 
