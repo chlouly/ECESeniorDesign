@@ -80,21 +80,21 @@ const HomeMenu = () => {
       </Link>
       <Link
         to="/choose"
-        className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-green-500 rounded-md shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+        className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-yellow-500 rounded-md shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
       >
         <FiUsers className="mr-2" />
         Choose your team
       </Link>
-      <Link
+      {/* <Link
         to="/settings"
         className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-yellow-500 rounded-md shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
       >
         <FiSettings className="mr-2" />
         Settings
-      </Link>
+      </Link> */}
       <Link
         to="/upload"
-        className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-red-500 rounded-md shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
+        className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-purple-500 rounded-md shadow-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
       >
         <FiUsers className="mr-2" />
         Upload PDF

@@ -10,6 +10,7 @@ function generateImageUrl(index) {
 }
 
 function GameInterface() {
+  const [swapForID, setSwapForID] = useState(null);
   const [players, setPlayers] = useState(() => {
     const storedPlayers = localStorage.getItem("players");
     return storedPlayers ? JSON.parse(storedPlayers) : [];
@@ -101,7 +102,7 @@ function GameInterface() {
   const handleActionClick = (action, m_id) => {
     let user_ID = localStorage.getItem("user_id");
     user_ID = parseInt(user_ID, 10);
-    console.log(paragraphData)
+    console.log(paragraphData);
     fetch("/action", {
       method: "POST",
       headers: {
@@ -111,7 +112,7 @@ function GameInterface() {
         id: user_ID,
         gameNumber: parseInt(gameNumber),
         action: action,
-        m_id: m_id,
+        m_id: swapForID,
         corr_ans: paragraphData.correct_answer,
         chosen_ans: chosenAnswer
       }),
@@ -123,6 +124,9 @@ function GameInterface() {
         } else if (response.status === 221) {
           setChosenAnswer(null);
           alert("Wrong Answer!");
+          return response.json();
+        } else if (response.status == 545) {
+          alert("Monster died")
           return response.json();
         }
 
@@ -369,32 +373,27 @@ function GameInterface() {
 
           {players.length > 0 && players[playerIndex] != null && players[playerIndex].monsters_roster != null ? (
             <div className="flex justify-between items-center space-y-2">
-
               {players[playerIndex].monsters_roster.map((monsterIndex) => (
-                <div key={monsterIndex} className="flex flex-col items-center">
-                  <button
-                    className={`rounded-full focus:outline-none ${players[playerIndex].current_monster.id === monsterIndex ? "border-4 border-blue-500" : "border-2 border-transparent"}`}
-
-                  >
-                    <img
-                      className="w-20 h-20 rounded-full"
-                      src={generateImageUrl(monsterIndex % 20)}
-                      alt="Monster"
-                    />
-                  </button>
-
-                  {/* Uncomment below to add more details if available */}
-                  {/* <img src={monster.image} alt={`Monster ${monster.name}`} className="object-cover rounded-lg shadow" />
-              <p className="text-blue-700">{monster.name}</p> */}
-                </div>
+                parseInt(monsterIndex) !== parseInt(players[playerIndex].current_monster.id) ? (
+                  <div key={monsterIndex} className="flex flex-col items-center">
+                    <button
+                      className={`rounded-full focus:outline-none ${swapForID === monsterIndex ? "border-4 border-blue-500" : "border-2 border-transparent"}`}
+                      onClick={() => setSwapForID(monsterIndex)}
+                    >
+                      <img
+                        className="w-20 h-20 rounded-full"
+                        src={generateImageUrl(monsterIndex % 20)}
+                        alt="Monster"
+                      />
+                    </button>
+                  </div>
+                ) : null
               ))}
             </div>
           ) : (
-            <>
-              <ClipLoader color={"#000"} loading={true} size={50} />
-              <p className="text-blue-700">Loading Monster...</p>
-            </>
+            <ClipLoader color={"#000"} loading={true} size={50} />
           )}
+
 
         </div>
 

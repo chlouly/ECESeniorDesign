@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 function generateImageUrl (index) {
   return `https://seniordesign-s3.s3.amazonaws.com/${index}.png`
@@ -11,7 +12,7 @@ const ChooseTeamPage = () => {
   const [selectedRoster, setSelectedRoster] = useState();
   const [selectedBench, setSelectedBench] = useState();
   const [user_ID, setUser_ID] = useState(parseInt(localStorage.getItem("user_id"), 10));
-
+  const navigate = useNavigate();
   useEffect(() => {
     fetchMonsters();
   }, []);
@@ -101,6 +102,12 @@ const ChooseTeamPage = () => {
 
 
       </div>
+      <button
+                className="flex items-center justify-center w-full max-w-md px-6 py-3 text-white bg-red-500 rounded-md shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                onClick={() => navigate('/')}
+            >
+                Go back
+            </button>
     </div>
   );
 };
