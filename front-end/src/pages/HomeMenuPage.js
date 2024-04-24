@@ -16,7 +16,7 @@ const HomeMenu = () => {
       });
       const data = await response.json();
       console.log(data);
-      localStorage.setItem("user_id", data.user_id);
+      localStorage.setItem("user_id", data.id);
     } catch (error) {
       console.error("Error fetching data:", error);
       // remove tokens and redirect to login
@@ -38,9 +38,9 @@ const HomeMenu = () => {
       const response = fetch("/logout", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${access_token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ id: 1 }),
       });
       console.log(response);
       if (response === 200) {
@@ -51,12 +51,11 @@ const HomeMenu = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
     }
-    // Clear local authentication state
-    localStorage.removeItem("id_token");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("isAuthenticated");
 
-    window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/login&redirect_uri=https%3A%2F%2Fpokidips.games/login`;
+    // Clean all the local storage
+    localStorage.clear();
+
+    window.location.href = `https://pokidips.auth.us-east-1.amazoncognito.com/logout?client_id=6ke1tj0bnmg6ij6t6354lfs30q&logout_uri=https%3A%2F%2Fpokidips.games/&redirect_uri=https%3A%2F%2Fpokidips.games/`;
   };
 
   return (
@@ -81,21 +80,21 @@ const HomeMenu = () => {
       </Link>
       <Link
         to="/choose"
-        className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-green-500 rounded-md shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+        className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-yellow-500 rounded-md shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
       >
         <FiUsers className="mr-2" />
         Choose your team
       </Link>
-      <Link
+      {/* <Link
         to="/settings"
         className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-yellow-500 rounded-md shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
       >
         <FiSettings className="mr-2" />
         Settings
-      </Link>
+      </Link> */}
       <Link
         to="/upload"
-        className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-red-500 rounded-md shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
+        className="flex items-center justify-center w-64 px-6 py-3 mb-4 text-white bg-purple-500 rounded-md shadow-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
       >
         <FiUsers className="mr-2" />
         Upload PDF
