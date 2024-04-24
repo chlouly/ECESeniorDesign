@@ -134,7 +134,7 @@ class Match {
         return ResCode.Correct;
     }
 
-    public async check_for_win(id: number): ResCode | null {
+    public async check_for_win(id: number): Promise<ResCode | null> {
         if (this.loser === 0) {
             return null;
         } else if (this.loser === id) {
@@ -151,7 +151,7 @@ class Match {
             }
 
             const checkInterval = setInterval(async () => {
-                const vic = this.check_for_win(id);
+                const vic = await this.check_for_win(id);
                 if (vic !== null) {
                     clearInterval(checkInterval);
                     resolve(vic);
