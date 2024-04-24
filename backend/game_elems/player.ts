@@ -5,8 +5,8 @@
 
 import { ResCode, isResCode } from '../error';
 import { Egg } from './egg';
-import { Monster, MonsterRow, MonsterType } from './monster';
-import { fetch_monster, new_monster, update_player } from '../rds_actions';
+import { MAX_HEALTH, Monster, MonsterRow, MonsterType } from './monster';
+import { fetch_monster, heal_monster, new_monster, update_player } from '../rds_actions';
 import { logger } from '../logger';
 
 const NUM_MONSTERS_ROSTER: number = 6;
@@ -32,6 +32,7 @@ class Player {
     private name: string;   // Username
     private id: number;     // Actual user ID
     public monsters_roster: number[] = [];     // Monsters to be used in fights
+    public monsters_dead: number[] = [];       // Monsters that are dead in the roster
     public monsters_bench: number[] = [];      // Monster ids stored away for later
     public eggs: number[] = [];                // Egg ids that the user has
     private level: number = 1;
@@ -183,6 +184,27 @@ class Player {
         this.current_monster.heal();
 
         return ResCode.Ok
+    }
+
+    public async heal_all(): Promise<ResCode> {
+        if (this.current_monster !== null) {
+            this.current_monster.health = MAX_HEALTH;
+        }
+
+        let code: ResCode = ResCode.Ok;
+        this.monsters_roster.map(async (id) => {
+            const res = await heal_monster(this.id, id);
+
+            code = (res === ResCode.Ok)? code : res;
+        })
+
+        if (code !== ResCode.Ok) {
+            return code;
+        }
+
+        this.monsters_dead = [];
+
+        return ResCode.Ok;
     }
 
     // Swaps in the monster with the designated ID (from the roster only)
@@ -432,6 +454,7 @@ interface PlayerRow {
     name: string;   
     id: number; 
     monsters_roster: number[];
+    monsters_dead: number[];
     monsters_bench: number[];
     eggs: number[];
     currently_hatching_egg: number | null;
@@ -459,6 +482,7 @@ function player2row(player: Player): PlayerRow {
         id: player.get_id(),
         monsters_roster: player.monsters_roster,
         monsters_bench: player.monsters_bench,
+        monsters_dead: [],
         eggs: player.eggs,
         currently_hatching_egg: player.currently_hatching_egg,
         current_monster: (player.current_monster === null)? null : player.current_monster.id,   // Get id

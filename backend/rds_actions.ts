@@ -1,7 +1,7 @@
 import { QueryResult } from 'pg';
 import { get_rds_connection, USER_TABLE_NAME, MONSTER_TABLE_NAME, EGG_TABLE_NAME, COGNITO_TABLE_NAME } from './rds_config';
 import { logger } from './logger';
-import { Monster, MonsterRow, row2monster} from './game_elems/monster';
+import { MAX_HEALTH, Monster, MonsterRow, row2monster} from './game_elems/monster';
 import { ResCode } from './error';
 import { Player, PlayerRow, row2player, player2row } from './game_elems/player';
 import { Egg, EggRow, egg2row, row2egg } from './game_elems/egg';
@@ -310,6 +310,36 @@ async function delete_monster(p_id: number, m_id: number): Promise<ResCode> {
     }
 }
 
+async function heal_monster(p_id: number, m_id: number): Promise<ResCode> {
+    const client = await get_rds_connection();
+    const query = `
+        UPDATE ${MONSTER_TABLE_NAME}
+        SET health = $1
+        WHERE id = $2 AND user_id = $3;
+    `;
+
+    const values = [
+        MAX_HEALTH,
+        m_id,
+        p_id
+    ]
+
+    try {
+        const res = await client.query(query, values);
+
+        if (res.rowCount === 0) {
+            return ResCode.NotFound;
+        }
+
+        return ResCode.Ok;
+    } catch (error) {
+        logger.error('Error Manipulating RDS DB -- heal_monster():', error);
+        return ResCode.RDSErr;
+    } finally {
+        await client.end();
+    }
+}
+
 
 /* --- EGG DB INTERACTIONS --- */
 // NEW 
@@ -446,6 +476,7 @@ export {
     fetch_monster,
     update_monster,
     delete_monster,
+    heal_monster,
 
     // Players
     new_player,

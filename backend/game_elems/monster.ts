@@ -182,5 +182,6 @@ export {
     MonsterType,
     MonsterRow,
     row2monster,
-    monster2row
+    monster2row,
+    MAX_HEALTH
 }
