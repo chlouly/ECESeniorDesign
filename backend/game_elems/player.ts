@@ -304,7 +304,7 @@ class Player {
 
     // Swaps the position of two monsters's ids, one in the bench and one in the roster
     // Returns false if the swap fails and true if it succeeds.
-    swap_monsters(bench_id: number | null, roster_id: number | null): boolean {
+    public swap_monsters(bench_id: number | null, roster_id: number | null): boolean {
         const bench_mon: number | null = this.remove_from_bench(bench_id);
         if (bench_mon === null && bench_id !== null) { 
             return false;
