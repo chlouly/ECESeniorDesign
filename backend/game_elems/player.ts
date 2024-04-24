@@ -493,7 +493,7 @@ function player2row(player: Player): PlayerRow {
         id: player.get_id(),
         monsters_roster: player.monsters_roster,
         monsters_bench: player.monsters_bench,
-        monsters_dead: [],
+        monsters_dead: player.monsters_dead,
         eggs: player.eggs,
         currently_hatching_egg: player.currently_hatching_egg,
         current_monster: (player.current_monster === null)? null : player.current_monster.id,   // Get id
