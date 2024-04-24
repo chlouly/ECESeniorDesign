@@ -29,7 +29,6 @@ class Monster {
     health: number = MAX_HEALTH;
     evolution_number: number = 1;
     type: MonsterType;
-    alive: boolean = true;
 
     // Add in some sort of defense and attack
 
@@ -115,10 +114,13 @@ class Monster {
         if (this.health <= 0) {
             // Monster is defeated
             this.health = 0;
-            this.alive = false;
         }
 
         return;
+    }
+
+    public is_alive(): boolean {
+        return this.health > 0;
     }
 
     // Gets the monster data to be returned in an API call
