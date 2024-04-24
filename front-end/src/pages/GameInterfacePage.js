@@ -5,6 +5,10 @@ import battle_arena from "../images/battle_arena.jpg";
 import { useNavigate } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
 
+function generateImageUrl(index) {
+  return `https://seniordesign-s3.s3.amazonaws.com/${index}.png`
+}
+
 function GameInterface() {
   const [players, setPlayers] = useState(() => {
     const storedPlayers = localStorage.getItem("players");
@@ -116,12 +120,12 @@ function GameInterface() {
         if (response.status === 220) {
           setChosenAnswer(null);
           return response.json();
-        }else if (response.status === 221) {
+        } else if (response.status === 221) {
           setChosenAnswer(null);
           alert("Wrong Answer!");
           return response.json();
         }
-        
+
         else {
           console.error("Not response 200");
           throw new Error("Failed to perform action");
@@ -212,7 +216,7 @@ function GameInterface() {
     if (players.length > 0 && id !== null) {
       const foundIndex = players.findIndex((player) => player.id === id);
       const foundOtherIndex = players.findIndex((player) => player.id !== id);
-  
+
       setPlayerIndex(foundIndex >= 0 ? foundIndex : null);
       setOtherPlayerIndex(foundOtherIndex >= 0 ? foundOtherIndex : null);
     }
@@ -267,7 +271,7 @@ function GameInterface() {
             {paragraphData.question.options?.map((option, index) => (
               <button
                 key={index}
-                className={`px-4 py-2 rounded-lg shadow hover:bg-blue-500 text-white text-md text-left ${ chosenAnswer !== option[0] ? 'bg-green-500' : 'bg-blue-600'}`}
+                className={`px-4 py-2 rounded-lg shadow hover:bg-blue-500 text-white text-md text-left ${chosenAnswer !== option[0] ? 'bg-green-500' : 'bg-blue-600'}`}
                 onClick={() => setChosenAnswer(option[0])}
               >
                 {option}
@@ -280,19 +284,39 @@ function GameInterface() {
       {/* Monster 1 Section */}
       <div className="flex col-span-1 row-span-2 flex-col items-center  justify-center">
         <img
-          src={monster1}
+          src={generateImageUrl(players[playerIndex]?.current_monster?.id % 20)}
           alt="Monster 1"
-          className="object-cover rounded-lg shadow"
+          className="object-cover rounded-lg shadow h-3/4"
         />
         <div className="bg-blue-100 rounded-lg shadow p-2 text-center mt-2 w-full">
-          
-          { players.length > 0 && players[playerIndex] != null  && players[playerIndex].current_monster != null ? (
+
+          {players.length > 0 && players[playerIndex] != null && players[playerIndex].current_monster != null ? (
             <>
-            <p className="text-blue-800 font-semibold">Your Monster: {players[playerIndex].current_monster.name}</p>
+              {/* <p className="text-blue-800 font-semibold">Your Monster: {players[playerIndex].current_monster.name}</p> */}
               {/* <p className="text-blue-700"></p> */}
-              <p className="text-blue-700">Level: {players[playerIndex].current_monster.level}</p>
-              <p className="text-blue-700">XP: {players[playerIndex].current_monster.xp}</p>
-              <p className="text-blue-700">Health: {players[playerIndex].current_monster.health}</p>
+              <div className="flex items-center space-x-3 mb-2">
+                <span role="img" aria-label="monster" className="text-2xl">👾</span>
+                <p className="text-blue-800 font-semibold">Your Monster: {players[playerIndex].current_monster.name}</p>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-blue-700">
+                <div className="flex items-center space-x-2">
+                  <span role="img" aria-label="level" className="text-xl">🏅</span>
+                  <p>Level: {players[playerIndex].current_monster.level}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span role="img" aria-label="experience" className="text-xl">🌟</span>
+                  <p>XP: {players[playerIndex].current_monster.xp}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span role="img" aria-label="health" className="text-xl">❤️</span>
+                  <div className="w-full">
+                    <div className="bg-gray-300 w-full rounded-full h-3 dark:bg-gray-700">
+                      <div className="bg-red-600 h-3 rounded-full" style={{ width: `${(players[playerIndex].current_monster.health / 100) * 100}%` }}></div>
+                    </div>
+                    <p>{((players[playerIndex].current_monster.health / 100) * 100).toFixed(1)}%</p>
+                  </div>
+                </div>
+              </div>
             </>
           ) : (
             <ClipLoader color={"#000"} loading={true} size={50} />
@@ -308,8 +332,8 @@ function GameInterface() {
             {players.length > 0 && players[playerIndex] != null && (
               <>
                 <p className="text-blue-700">{players[playerIndex].name}</p>
-                <p className="text-blue-700">Level: {players[playerIndex].level}</p>
-                <p className="text-blue-700">XP: {players[playerIndex].xp}</p>
+                <p className="text-blue-700">🏅 Level: {players[playerIndex].level}</p>
+                <p className="text-blue-700">🌟 XP: {players[playerIndex].xp}</p>
               </>
             )}
           </div>
@@ -325,7 +349,7 @@ function GameInterface() {
                   {actions.map((action, index) => (
                     <button
                       key={index}
-                      className="px-4 py-2 m-1 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white w-1/3"
+                      className="px-4 py-2 m-1 rounded-lg shadow bg-green-500 hover:bg-green-600 text-white w-1/4"
                       onClick={() => handleActionClick(action.api_name, players[playerIndex].current_monster.id)}
                     >
                       {action.name}
@@ -342,24 +366,35 @@ function GameInterface() {
 
         {/* Monsters Section */}
         <div className="flex flex-row space-x-4 mt-4 justify-center">
-        {players.length > 0 && players[playerIndex] != null && players[playerIndex].monsters_roster != null ? (
-        <div className="flex justify-between items-center space-y-2">
 
-          {players[playerIndex].monsters_roster.map((monsterIndex) => (
-            <div key={monsterIndex} className="text-center">
-              <p>Monster Index: {monsterIndex}</p>
-              {/* Uncomment below to add more details if available */}
-              {/* <img src={monster.image} alt={`Monster ${monster.name}`} className="object-cover rounded-lg shadow" />
+          {players.length > 0 && players[playerIndex] != null && players[playerIndex].monsters_roster != null ? (
+            <div className="flex justify-between items-center space-y-2">
+
+              {players[playerIndex].monsters_roster.map((monsterIndex) => (
+                <div key={monsterIndex} className="flex flex-col items-center">
+                  <button
+                    className={`rounded-full focus:outline-none ${players[playerIndex].current_monster.id === monsterIndex ? "border-4 border-blue-500" : "border-2 border-transparent"}`}
+
+                  >
+                    <img
+                      className="w-20 h-20 rounded-full"
+                      src={generateImageUrl(monsterIndex % 20)}
+                      alt="Monster"
+                    />
+                  </button>
+
+                  {/* Uncomment below to add more details if available */}
+                  {/* <img src={monster.image} alt={`Monster ${monster.name}`} className="object-cover rounded-lg shadow" />
               <p className="text-blue-700">{monster.name}</p> */}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : (
-        <>
-        <ClipLoader color={"#000"} loading={true} size={50} />
-        <p className="text-blue-700">Loading Monster...</p>
-      </>
-      )}
+          ) : (
+            <>
+              <ClipLoader color={"#000"} loading={true} size={50} />
+              <p className="text-blue-700">Loading Monster...</p>
+            </>
+          )}
 
         </div>
 
@@ -377,23 +412,45 @@ function GameInterface() {
           </button>
         </div>
       </div>
+
+      {/* Monster 2 Section */}
       <div className="flex flex-col col-span-1 row-span-2 items-center justify-center">
         {players.length > 1 ? (
           <>
             <img
-              src={monster2}
+              src={generateImageUrl(players[otherPlayerIndex]?.current_monster?.id % 20)}
               alt="Monster 2"
-              className="object-cover rounded-lg shadow"
+              className="object-cover rounded-lg shadow h-3/4"
             />
             <div className="bg-blue-100 rounded-lg shadow p-2 text-center mt-2 w-full">
-              
+
               {players.length > 1 && players[otherPlayerIndex] != null && players[otherPlayerIndex].current_monster != null ? (
                 <>
-                <p className="text-blue-800 font-semibold">Opponent Monster: {players[otherPlayerIndex].current_monster.name}</p>
+                  {/* <p className="text-blue-800 font-semibold">Your Monster: {players[playerIndex].current_monster.name}</p> */}
                   {/* <p className="text-blue-700"></p> */}
-                  <p className="text-blue-700">Level: {players[otherPlayerIndex].current_monster.level}</p>
-                  <p className="text-blue-700">XP: {players[otherPlayerIndex].current_monster.xp}</p>
-                  <p className="text-blue-700">Health: {players[otherPlayerIndex].current_monster.health}</p>
+                  <div className="flex items-center space-x-3 mb-2">
+                    <span role="img" aria-label="monster" className="text-2xl">👾</span>
+                    <p className="text-blue-800 font-semibold">Opponent's Monster: {players[otherPlayerIndex].current_monster.name}</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 text-blue-700">
+                    <div className="flex items-center space-x-2">
+                      <span role="img" aria-label="level" className="text-xl">🏅</span>
+                      <p>Level: {players[otherPlayerIndex].current_monster.level}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span role="img" aria-label="experience" className="text-xl">🌟</span>
+                      <p>XP: {players[otherPlayerIndex].current_monster.xp}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span role="img" aria-label="health" className="text-xl">❤️</span>
+                      <div className="w-full">
+                        <div className="bg-gray-300 w-full rounded-full h-3 dark:bg-gray-700">
+                          <div className="bg-red-600 h-3 rounded-full" style={{ width: `${(players[otherPlayerIndex].current_monster.health / 100) * 100}%` }}></div>
+                        </div>
+                        <p>{((players[otherPlayerIndex].current_monster.health / 100) * 100).toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <ClipLoader color={"#000"} loading={true} size={50} />
