@@ -88,6 +88,8 @@ class Match {
             return false;
         }
 
+        this.players[id].heal_all();
+
         // The desired player is alone in the game so we may as well delete the game
         if (this.occupancy() <= 1) {
             this.self_destruct();

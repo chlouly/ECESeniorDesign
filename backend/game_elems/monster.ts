@@ -85,7 +85,7 @@ class Monster {
         // Evolve the monster if it reaches level 33 or 66
         if (this.level === 33 || this.level === 66) { this.evolve() }
 
-        this.increase_xp(xp - level_up_xp);
+        this.increase_xp(level_up_xp);
     }
 
     // Adds a quarter of the max heath back to the monster

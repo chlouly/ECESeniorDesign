@@ -603,12 +603,12 @@ app.post('/swapmonsters', async (req: Request, res: Response) => {
     return res.status(ResCode.NoBody).end();
   }
 
-  let code: ResCode = validate_match_ins(req.body.id, req.body.roster_id, null, null);
+  let code: ResCode = validate_match_ins(req.body.id, null, null, req.body.roster_id);
   if (code !== ResCode.Ok) {
     return res.status(code).end();
   }
 
-  code = validate_match_ins(null, req.body.bench_id, null, null);
+  code = validate_match_ins(null, null, null, req.body.bench_id);
   if (code !== ResCode.Ok) {
     return res.status(code).end();
   }

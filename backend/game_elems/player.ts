@@ -130,7 +130,7 @@ class Player {
             await this.new_monster();
         }
 
-        this.increase_xp(xp - level_up_xp);
+        this.increase_xp(level_up_xp);
     }
 
 
