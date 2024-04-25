@@ -20,7 +20,7 @@ SAT Monster Battle is a game where two users fight by answering AI-generated SAT
 
 ## Usage
 
-To play please visit http://34.235.116.79:3000, or run the game on your own aws instance with the necessary RDS DB.
+To play please visit https://pokidips.games, or run the game on your own aws instance with the necessary RDS DB.
 
 ## Versioning
 
@@ -28,8 +28,8 @@ We use [Semantic Versioning](https://semver.org/) for our project. Our project c
 
 ### Backend Version (Express)
 
-The current version of the backend is `0.5.0`. Major updates, new features, and bug fixes will increment the version number according to the Semantic Versioning guidelines.
+The current version of the backend is `1.0.0`. Major updates, new features, and bug fixes will increment the version number according to the Semantic Versioning guidelines.
 
 ### Frontend Version (React)
 
-The current version of the frontend is `0.3.0`. Like the backend, version numbers will be updated based on major changes, feature additions, and bug fixes.
+The current version of the frontend is `1.0.0`. Like the backend, version numbers will be updated based on major changes, feature additions, and bug fixes.
