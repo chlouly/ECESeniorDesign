@@ -16,8 +16,15 @@
     "web-vitals": "^2.1.4"
   },
   "jest": {
-    "collectCoverage": true,
-    "coverageDirectory": "coverage",
+    "clearMocks": true,
+    "collectCoverageFrom": [
+      "src/**/*.{js,jsx,ts,tsx}",
+      "!src/**/*.d.ts"
+    ],
+    "coveragePathIgnorePatterns": [
+      "./node_modules/"
+    ],
+    "coverageReporters": ["json", "lcov", "text", "clover"],
     "coverageThreshold": {
       "global": {
         "branches": 50,
