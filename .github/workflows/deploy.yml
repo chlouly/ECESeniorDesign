@@ -24,23 +24,21 @@ jobs:
           TARGET: "/home/ec2-user/OSS"
 
   test-frontend:
-    name: Run Frontend Tests
+
+    name: Test Frontend
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '14'  # or whatever version your project uses
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test
+      - name: Execute Frontend Build Commands on EC2
+        run: |
+          echo "${{ secrets.Senior_Design_deploy_key }}" > private_key
+          chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ec2-user@ec2-107-20-33-135.compute-1.amazonaws.com '
+            cd /home/ec2-user/OSS/front-end &&
+            npm install &&
+            npm run test &&
+            echo "Frontend test script executed successfully"
+          '
 
   build-backend:
     name: Build Backend
