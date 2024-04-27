@@ -25,7 +25,14 @@ jobs:
       - name: Run tests
         run: |
           cd front-end
-          npm test
+          npm test -- --coverage
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: front-end/coverage/lcov-report/
+
 
   deploy:
     name: Deploy to EC2
