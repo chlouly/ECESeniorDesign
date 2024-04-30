@@ -16,6 +16,10 @@ SAT Monster Battle is a game where two users fight by answering AI-generated SAT
 - Learning: Users can learn and practice SAT questions without engaging in battles, allowing for a focus on educational content.
 - User Accounts and Progress Tracking: Users can create accounts to save their progress, track their improvement over time, and customize their monsters.
 
+## AI model and dataset
+ - LLM model: https://huggingface.co/betterMateusz/Llama-2-7b-SAT
+ - SAT questions: https://huggingface.co/datasets/betterMateusz/SAT_Writting_Reading_Assessment_Question_Bank
+
 ## Team Members
 
 - Christopher Louly
